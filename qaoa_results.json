@@ -1,0 +1,13 @@
+{
+  "selected_funds": [
+    "Quant Small Cap Fund",
+    "Templeton India Equity Income Fund",
+    "Quant Infrastructure Fund"
+  ],
+  "portfolio_sharpe": 2.223333333333333,
+  "portfolio_return": 0.16847881459710998,
+  "portfolio_alpha": 20.040000000000003,
+  "qaoa_score": 0.6018823996611755,
+  "beats_random_pct": 99.11999999999999,
+  "optimal_exit_day": 252
+}
