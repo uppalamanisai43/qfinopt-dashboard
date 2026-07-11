@@ -1,10 +1,5 @@
-streamlit
-pandas
-numpy
-matplotlib
-xgboost
-scikit-learn
-scipy
-yfinance
-pennylane
-openpyxl
+streamlit==1.59.1
+pandas==2.2.3
+numpy==1.26.4
+matplotlib==3.9.2
+requests==2.32.3
