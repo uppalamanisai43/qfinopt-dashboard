@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -86,9 +87,9 @@ fun AppTopBar(
                 }
                 IconButton(onClick = onOpenPdf) {
                     Icon(
-                        imageVector = Icons.Default.PictureAsPdf,
-                        contentDescription = "PDF Reports & Reminders",
-                        tint = AccentGold
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "Quantum Optimizer",
+                        tint = Color(0xFFA855F7)
                     )
                 }
                 IconButton(onClick = onOpenSettings) {

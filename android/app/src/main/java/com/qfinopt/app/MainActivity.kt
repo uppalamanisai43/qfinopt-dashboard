@@ -112,7 +112,8 @@ class MainActivity : ComponentActivity() {
                                     NavDestination.PORTFOLIO,
                                     NavDestination.ANALYSIS,
                                     NavDestination.PLANNING,
-                                    NavDestination.EXPLORE
+                                    NavDestination.EXPLORE,
+                                    NavDestination.QUANTUM
                                 )
 
                                 bottomItems.forEach { dest ->
@@ -153,6 +154,7 @@ class MainActivity : ComponentActivity() {
                                         exploreSubTab = 0
                                         currentDestination = NavDestination.EXPLORE
                                     },
+                                    onNavigateToQuantum = { currentDestination = NavDestination.QUANTUM },
                                     onOpenSettings = { showServerSettings = true }
                                 )
                                 NavDestination.PORTFOLIO -> PortfolioScreen(
