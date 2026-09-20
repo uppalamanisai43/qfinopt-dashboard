@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Q-FinOpt</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_withdraw">Withdrawal</string>
+    <string name="nav_sip">SIP</string>
+    <string name="nav_analysis">Analysis</string>
+    <string name="nav_tools">Tools</string>
+</resources>

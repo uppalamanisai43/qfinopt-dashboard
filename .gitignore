@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# ML Model & Large Data Files (too large for GitHub)
+backend/data/qfinopt_cleaned.csv
+backend/data/mf_gb_model.joblib
+backend/data/*.joblib
+backend/data/*.pkl
+
+# Android Build Outputs
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# IDE & OS Files
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Pytest cache
+.pytest_cache/
+*.pytest_cache
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+*.env
+
+# Cloudflare tunnel binary (large)
+cloudflared.exe
+
+# MinGit (large)
+mingit/
+
+# Test outputs
+tests/__pycache__/
+htmlcov/
+.coverage
+
+# Temporary files
+*.tmp
+*.temp
