@@ -18,6 +18,9 @@ backend/data/qfinopt_cleaned.csv
 backend/data/mf_gb_model.joblib
 backend/data/*.joblib
 backend/data/*.pkl
+backend/data/users.json
+backend/data/portfolios.json
+backend/.git_backup/
 
 # Android Build Outputs
 android/.gradle/

@@ -29,7 +29,7 @@ enum class NavDestination(val label: String, val icon: ImageVector) {
     ANALYSIS("Analysis", Icons.Default.Analytics),
     PLANNING("Planning", Icons.Default.TrendingUp),
     EXPLORE("Explore", Icons.Default.Search),
-    REMINDERS("PDF Reports", Icons.Default.PictureAsPdf)
+    QUANTUM("Quantum", Icons.Default.AutoAwesome)
 }
 
 class MainActivity : ComponentActivity() {
@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
                                 currentUser = currentUser,
                                 onRefresh = { viewModel.refreshMarket() },
                                 onOpenProfile = { showProfileDialog = true },
-                                onOpenPdf = { currentDestination = NavDestination.REMINDERS },
+                                onOpenPdf = { currentDestination = NavDestination.QUANTUM },
                                 onOpenSettings = { showServerSettings = true }
                             )
                         },
@@ -161,7 +161,7 @@ class MainActivity : ComponentActivity() {
                                         analysisSubTab = 0
                                         currentDestination = NavDestination.ANALYSIS
                                     },
-                                    onNavigateToReminders = { currentDestination = NavDestination.REMINDERS }
+                                    onNavigateToReminders = { currentDestination = NavDestination.QUANTUM }
                                 )
                                 NavDestination.ANALYSIS -> Column(modifier = Modifier.fillMaxSize()) {
                                     TabRow(
@@ -244,7 +244,7 @@ class MainActivity : ComponentActivity() {
                                         PlatformScreen(viewModel = viewModel)
                                     }
                                 }
-                                NavDestination.REMINDERS -> RemindersScreen(viewModel = viewModel)
+                                NavDestination.QUANTUM -> QAOAScreen()
                             }
                         }
                     }

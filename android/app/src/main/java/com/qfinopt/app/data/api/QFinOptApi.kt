@@ -107,4 +107,9 @@ interface QFinOptApi {
         @Body req: WatchlistToggleRequest,
         @Query("user_id") userId: String
     ): Response<Map<String, Any>>
+
+    @POST("api/qaoa/optimize")
+    suspend fun runQaoaOptimizer(
+        @Body req: QAOAOptimizeRequest
+    ): Response<QAOAOptimizeResponse>
 }

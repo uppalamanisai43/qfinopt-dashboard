@@ -314,3 +314,44 @@ data class WatchlistResponse(
     @SerializedName("total_count") val totalCount: Int
 )
 
+// ── Quantum-Inspired QAOA Portfolio Optimizer ─────────────────────────────────
+
+data class QAOAOptimizeRequest(
+    @SerializedName("fund_names") val fundNames: List<String>,
+    @SerializedName("k") val k: Int = 3,
+    @SerializedName("qaoa_layers") val qaaoLayers: Int = 2
+)
+
+data class QAOAMetrics(
+    @SerializedName("sharpe_ratio") val sharpeRatio: Double,
+    @SerializedName("expected_annual_return_pct") val expectedAnnualReturnPct: Double,
+    @SerializedName("annual_volatility_pct") val annualVolatilityPct: Double
+)
+
+data class QAOABenchmarkRow(
+    @SerializedName("method") val method: String,
+    @SerializedName("type") val type: String,
+    @SerializedName("sharpe") val sharpe: Double,
+    @SerializedName("annual_return_pct") val annualReturnPct: Double,
+    @SerializedName("volatility_pct") val volatilityPct: Double,
+    @SerializedName("time_sec") val timeSec: Double,
+    @SerializedName("complexity") val complexity: String
+)
+
+data class QAOAOptimizeResponse(
+    @SerializedName("algorithm") val algorithm: String,
+    @SerializedName("n_funds_input") val nFundsInput: Int,
+    @SerializedName("k_funds_selected") val kFundsSelected: Int,
+    @SerializedName("qaoa_layers") val qaaoLayers: Int,
+    @SerializedName("qubo_size") val quboSize: String,
+    @SerializedName("qubo_energy") val quboEnergy: Double,
+    @SerializedName("convergence_quality") val convergenceQuality: Double,
+    @SerializedName("selected_funds") val selectedFunds: List<String>,
+    @SerializedName("portfolio_weights_pct") val portfolioWeightsPct: Map<String, Double>,
+    @SerializedName("qaoa_metrics") val qaaoMetrics: QAOAMetrics,
+    @SerializedName("markowitz_selected") val markowitzSelected: List<String>,
+    @SerializedName("markowitz_metrics") val markowitzMetrics: QAOAMetrics,
+    @SerializedName("benchmark_table") val benchmarkTable: List<QAOABenchmarkRow>,
+    @SerializedName("runtime_seconds") val runtimeSeconds: Double,
+    @SerializedName("quantum_advantage_note") val quantumAdvantageNote: String
+)
