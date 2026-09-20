@@ -76,3 +76,11 @@ htmlcov/
 # Temporary files
 *.tmp
 *.temp
+
+# Presentation & Slide Decks (local only - do not upload to GitHub)
+presentation.html
+PRESENTATION.md
+*.ppt
+*.pptx
+*.key
+
