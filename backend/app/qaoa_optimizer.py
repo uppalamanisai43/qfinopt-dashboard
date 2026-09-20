@@ -5,10 +5,6 @@ Implements a simulation of the Quantum Approximate Optimization Algorithm (QAOA)
 for mutual fund portfolio selection as a QUBO (Quadratic Unconstrained Binary
 Optimization) problem.
 
-Paper Reference:
-  "QFinOpt: Mutual Fund Return Prediction and Optimal Withdrawal Timing Using
-   Data Analytics, Simulation, and Quantum-Inspired Computing"
-
 QUBO Formulation:
   Binary variable xᵢ ∈ {0,1} for each fund i (1 = selected, 0 = not selected)
   Cost: C(x) = -λ₁ Σᵢ μᵢxᵢ  +  λ₂ Σᵢ Σⱼ σᵢⱼxᵢxⱼ  +  λ₃(Σᵢxᵢ - K)²

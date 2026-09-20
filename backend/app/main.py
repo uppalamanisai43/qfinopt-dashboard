@@ -548,8 +548,6 @@ def qaoa_portfolio_optimize(req: QAOAOptimizeRequest):
     Binary Optimization) problem and solves it using a simulated QAOA circuit
     with p layers. Returns optimal fund selection, Sharpe ratio, and a full
     benchmark table comparing QAOA vs Classical Markowitz vs Brute-Force.
-
-    Paper: "QFinOpt: ...Quantum-Inspired Computing" (Table 4B)
     """
     try:
         from app.qaoa_optimizer import run_qaoa_portfolio_optimizer

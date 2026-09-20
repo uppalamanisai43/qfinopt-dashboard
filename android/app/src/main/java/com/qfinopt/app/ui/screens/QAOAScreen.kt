@@ -90,7 +90,7 @@ fun QAOAScreen() {
                 Text(
                     "Formulates mutual fund selection as a Quadratic Unconstrained Binary " +
                     "Optimization (QUBO) problem. Solved via a simulated QAOA circuit with " +
-                    "p-layer Ising Hamiltonian evolution — matching the research paper.",
+                    "p-layer Ising Hamiltonian evolution.",
                     color = Color(0xFFDDD6FE),
                     fontSize = 12.sp,
                     lineHeight = 17.sp
@@ -459,10 +459,10 @@ fun QAOAScreen() {
                 }
             }
 
-            // Benchmark table — Table 4B from paper
+            // Benchmark table — Classical vs Quantum
             item {
                 QuantumCard {
-                    Text("⚖️ Benchmark Comparison (Paper Table 4B)",
+                    Text("⚖️ Benchmark Comparison",
                         color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     Text("QAOA vs Classical Markowitz vs Brute-Force",
                         color = Color(0xFF94A3B8), fontSize = 11.sp)

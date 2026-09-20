@@ -22,6 +22,16 @@ backend/data/users.json
 backend/data/portfolios.json
 backend/.git_backup/
 
+# Research paper and manuscript artifacts (not for public repo)
+MANUSCRIPT_REVISION_HANDOVER.md
+paper_figures/
+*.pdf
+Q_FinOpt_Project_Report.pdf
+backend/Q_FinOpt_Project_Report.pdf
+paper_revision_guide.md
+figures_audit_and_replacements.md
+
+
 # Android Build Outputs
 android/.gradle/
 android/app/build/

@@ -11,7 +11,7 @@
 
 ### *Democratizing Institutional Quantitative Finance, Machine Learning & Quantum Optimization for Every Indian Investor*
 
-[📥 Download APK](./QFinOpt.apk) · [📖 API Docs](http://localhost:8000/docs) · [📄 Project Report](./Q_FinOpt_Project_Report.pdf)
+[📥 Download APK](./QFinOpt.apk) · [📖 API Docs](http://localhost:8000/docs)
 
 </div>
 
@@ -54,7 +54,7 @@
 - **Ising Hamiltonian & QAOA Circuit** — Binary variables mapped to quantum Pauli-$Z$ spin operators ($x_i \mapsto \frac{I - Z_i}{2}$), simulated with $p$-layer variational evolution:
   $$|\psi(\boldsymbol{\gamma}, \boldsymbol{\beta})\rangle = U_M(\beta_p) U_C(\gamma_p) \cdots U_M(\beta_1) U_C(\gamma_1) |+\rangle^{\otimes N}$$
 - **Asymptotic Polynomial Scaling** — Evaluates in $\mathcal{O}(p \cdot N^2)$ gate complexity versus factorial $\mathcal{O}\left(\binom{N}{K}\right)$ classical combinatorial search space ($10^{46}$ states for institutional universe $N=500, K=30$).
-- **Benchmark Comparison (Paper Table 4B)**:
+- **Benchmark Comparison (Classical vs. Quantum Solvers)**:
 
 | Optimization Method | Problem Formulation | Sharpe Ratio | 1-Yr Return | Volatility | Eval Time | Algorithmic Complexity |
 |---|---|---|---|---|---|---|
