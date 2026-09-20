@@ -32,7 +32,6 @@ fun DashboardScreen(
     onNavigateToAnalysis: () -> Unit,
     onNavigateToPlanning: () -> Unit,
     onNavigateToExplore: () -> Unit,
-    onNavigateToQuantum: () -> Unit = {},
     onOpenSettings: () -> Unit = {}
 ) {
     val selectedFund by viewModel.selectedFund.collectAsState()
@@ -121,51 +120,6 @@ fun DashboardScreen(
                         }
                     }
                 }
-            }
-        }
-
-        // ⚛️ Quantum Optimizer Quick Access Banner
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .clickable { onNavigateToQuantum() },
-            color = Color(0xFF1E1B4B),
-            border = BorderStroke(1.dp, Color(0xFF7C3AED).copy(alpha = 0.6f))
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("⚛️", fontSize = 28.sp)
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "Quantum Optimizer",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 15.sp,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Color(0xFF7C3AED))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text("QAOA", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Text(
-                        "Solve discrete portfolio selection via simulated QAOA QUBO. Tap to run.",
-                        fontSize = 11.sp,
-                        color = Color(0xFFC7D2FE),
-                        lineHeight = 15.sp
-                    )
-                }
-                Icon(Icons.Default.ChevronRight, contentDescription = "Open", tint = Color(0xFFA78BFA))
             }
         }
 

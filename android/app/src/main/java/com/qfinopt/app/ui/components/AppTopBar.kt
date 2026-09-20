@@ -87,9 +87,9 @@ fun AppTopBar(
                 }
                 IconButton(onClick = onOpenPdf) {
                     Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = "Quantum Optimizer",
-                        tint = Color(0xFFA855F7)
+                        imageVector = Icons.Default.PictureAsPdf,
+                        contentDescription = "PDF Reports & Reminders",
+                        tint = AccentGold
                     )
                 }
                 IconButton(onClick = onOpenSettings) {

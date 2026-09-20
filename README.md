@@ -4,12 +4,11 @@
 <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white"/>
 <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white"/>
 <img src="https://img.shields.io/badge/ML-scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white"/>
-<img src="https://img.shields.io/badge/Quantum--Inspired-QAOA%20QUBO-9333EA?style=for-the-badge"/>
 <img src="https://img.shields.io/badge/SEBI-Compliant-blue?style=for-the-badge"/>
 
-# 📈 QFinOpt — AI & Quantum-Inspired Mutual Fund Research App
+# 📈 QFinOpt — AI-Powered Mutual Fund Research App
 
-### *Democratizing Institutional Quantitative Finance, Machine Learning & Quantum Optimization for Every Indian Investor*
+### *Democratizing Professional-Grade Quantitative Finance for Every Indian Investor*
 
 [📥 Download APK](./QFinOpt.apk) · [📖 API Docs](http://localhost:8000/docs)
 
@@ -48,22 +47,6 @@
 - **Buy / Hold / Exit Score** — 0–100 AI confidence score per fund based on 12 quantitative features (RSI, momentum, volatility z-score, Sharpe, Alpha, Beta, Expense Ratio)
 - **Market Sentiment Badge** — Real-time 🟢 BULLISH / 🔴 BEARISH indicator from Nifty 50 momentum
 
-### ⚛️ Quantum-Inspired Computing (QAOA & QUBO Optimization)
-- **QUBO Mapping** — Discrete mutual fund portfolio selection formulated as a Quadratic Unconstrained Binary Optimization problem with cardinality constraints:
-  $$\min_{x \in \{0,1\}^N} -\lambda_1 \sum_i \mu_i x_i + \lambda_2 \sum_{i,j} \sigma_{ij} x_i x_j + \lambda_3 \left(\sum_i x_i - K\right)^2$$
-- **Ising Hamiltonian & QAOA Circuit** — Binary variables mapped to quantum Pauli-$Z$ spin operators ($x_i \mapsto \frac{I - Z_i}{2}$), simulated with $p$-layer variational evolution:
-  $$|\psi(\boldsymbol{\gamma}, \boldsymbol{\beta})\rangle = U_M(\beta_p) U_C(\gamma_p) \cdots U_M(\beta_1) U_C(\gamma_1) |+\rangle^{\otimes N}$$
-- **Asymptotic Polynomial Scaling** — Evaluates in $\mathcal{O}(p \cdot N^2)$ gate complexity versus factorial $\mathcal{O}\left(\binom{N}{K}\right)$ classical combinatorial search space ($10^{46}$ states for institutional universe $N=500, K=30$).
-- **Benchmark Comparison (Classical vs. Quantum Solvers)**:
-
-| Optimization Method | Problem Formulation | Sharpe Ratio | 1-Yr Return | Volatility | Eval Time | Algorithmic Complexity |
-|---|---|---|---|---|---|---|
-| **QAOA ($p=2$ Simulator)** | **Quantum Ising QUBO** | **2.22** | **61.40%** | **18.2%** | **0.180 s** | $\mathcal{O}(p \cdot N^2)$ |
-| Classical Markowitz QP | Convex Quadratic Program | 2.15 | 58.20% | 19.1% | 0.045 s | $\mathcal{O}(N^3)$ |
-| Brute-Force Exhaustive | Combinatorial Grid Search | 2.22 | 61.40% | 18.2% | 0.002 s | $\mathcal{O}\left(\binom{N}{K}\right)$ |
-
----
-
 ### 📊 Quantitative Finance Algorithms
 - **Markowitz Efficient Frontier** — Quadratic optimization finds the mathematically optimal weight for each fund in your portfolio (max Sharpe Ratio)
 - **Monte Carlo GBM Simulation** — 1,000-path Geometric Brownian Motion simulation for both SIP projections and Retirement Withdrawal planning
@@ -78,9 +61,10 @@
 | 🏠 **Dashboard** | Live Nifty/Sensex/Gold, Bullish/Bearish badge, Top AI-ranked funds, Fund filters |
 | 💼 **Portfolio** | Add holdings, live P&L tracking, XIRR, pie chart allocation, Watchlist |
 | 📊 **Analysis** | Deep AI analysis per fund — ML score, risk metrics, interactive NAV chart, Fund comparison |
-| 📈 **Planning** | Monte Carlo SIP simulation & Retirement withdrawal timing with corpus survival curves |
+| 📈 **SIP Planner** | Monte Carlo SIP simulation — Bull/Base/Bear projections over 1–30 years |
+| 🏖️ **Retirement Planner** | Withdrawal simulation — corpus survival probability over retirement period |
 | 🔍 **Explore** | Live AMFI search (14,000+ schemes), Brokers guide, Goal-based platform selector |
-| ⚛️ **Quantum** | **Quantum-Inspired QAOA Portfolio Optimizer** — interactive $p$-layer QUBO simulation, optimal portfolio selection, and live classical vs quantum benchmark comparison |
+| 🔔 **Reminders** | Smart alerts (SIP due, ML exit, tax harvest), Calendar sync, WhatsApp share, PDF reports |
 
 ---
 
@@ -92,23 +76,22 @@
 │         Jetpack Compose + Material 3 + MVVM                 │
 │                                                             │
 │  Dashboard → Portfolio → Analysis → Planning → Explore      │
-│  └── ⚛️ Quantum Optimizer (QAOA QUBO Simulation)           │
 └─────────────────────┬───────────────────────────────────────┘
                       │ REST API (HTTP/JSON)
 ┌─────────────────────▼───────────────────────────────────────┐
 │                Python FastAPI Backend                       │
 │                                                             │
 │  ┌──────────────┐  ┌────────────────┐  ┌────────────────┐  │
-│  │ fund_service │  │simulation_serv │  │ qaoa_optimizer │  │
-│  │ (Sharpe,     │  │ (Monte Carlo   │  │ (Quantum QUBO, │  │
-│  │  Alpha, Beta,│  │  GBM, XIRR)    │  │  QAOA p-layers,│  │
-│  │  ML Model)   │  │                │  │  Benchmarks)   │  │
+│  │ fund_service │  │simulation_serv │  │  data_manager  │  │
+│  │ (Sharpe,     │  │ (Monte Carlo   │  │  (87MB AMFI    │  │
+│  │  Alpha, Beta,│  │  GBM, XIRR)    │  │   CSV + Live   │  │
+│  │  ML Model)   │  │                │  │   NAV API)     │  │
 │  └──────────────┘  └────────────────┘  └────────────────┘  │
 │                                                             │
 │  ┌──────────────┐  ┌────────────────┐  ┌────────────────┐  │
-│  │portfolio_svc │  │  data_manager  │  │ market_service │  │
-│  │ (Holdings,   │  │ (87MB AMFI CSV │  │ (yfinance      │  │
-│  │  P&L, XIRR)  │  │  + Live NAV)   │  │  Nifty/Gold)   │  │
+│  │portfolio_svc │  │  auth_service  │  │ market_service │  │
+│  │ (Holdings,   │  │ (Register,     │  │ (yfinance      │  │
+│  │  P&L, XIRR)  │  │  Login, Guest) │  │  Nifty/Gold)   │  │
 │  └──────────────┘  └────────────────┘  └────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                       │
@@ -263,13 +246,13 @@ QFinOpt/
 ├── 📱 android/                        # Android App (Kotlin + Compose)
 │   └── app/src/main/java/com/qfinopt/app/
 │       ├── MainActivity.kt            # Entry point + bottom navigation
-│       ├── ui/screens/                # 6 app screens (including QAOAScreen.kt)
+│       ├── ui/screens/                # 6 app screens (Dashboard, Portfolio, Analysis, etc.)
 │       │   ├── DashboardScreen.kt
 │       │   ├── PortfolioScreen.kt
 │       │   ├── AnalysisScreen.kt
 │       │   ├── SipScreen.kt
 │       │   ├── WithdrawalScreen.kt
-│       │   └── QAOAScreen.kt          # ⚛️ Quantum-Inspired QAOA Screen
+│       │   └── RemindersScreen.kt
 │       ├── ui/components/             # 9 reusable UI components
 │       ├── ui/viewmodel/              # MainViewModel (StateFlow)
 │       └── data/                      # API client, models, local storage
@@ -277,7 +260,6 @@ QFinOpt/
 ├── 🐍 backend/                        # Python FastAPI AI Engine
 │   ├── app/
 │   │   ├── main.py                    # 25+ REST API routes
-│   │   ├── qaoa_optimizer.py          # ⚛️ QAOA QUBO Circuit Optimizer & Benchmarks
 │   │   ├── fund_service.py            # Sharpe, Alpha, Beta, ML scoring
 │   │   ├── simulation_service.py      # Monte Carlo GBM + XIRR
 │   │   ├── data_manager.py            # CSV loader + Live AMFI NAV

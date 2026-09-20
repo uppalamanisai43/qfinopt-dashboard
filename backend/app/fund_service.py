@@ -506,6 +506,7 @@ def get_fund_history(
     n_days = period_map.get(period, 252)
 
     hist_api_df = get_live_nav_history_mfapi(scheme_code)
+    amfi_match = None
 
     if hist_api_df is not None and not hist_api_df.empty and len(hist_api_df) > 10:
         source_label = "📡 Live AMFI Feed"
@@ -618,7 +619,13 @@ def get_fund_history(
         {"metric": "1 Year Return", "value": f"{ret_1y:.2f}%"}
     ]
 
-    current_nav_calc = amfi_match[1] if amfi_match else hist_nav
+    if amfi_match:
+        current_nav_calc = float(amfi_match[1])
+    elif hist_api_df is not None and not hist_api_df.empty:
+        current_nav_calc = float(hist_api_df["nav"].iloc[-1])
+    else:
+        current_nav_calc = hist_nav
+
     ml_ret_pct, ml_target_nav, ml_win_prob, _, _, ml_drivers = compute_ml_prediction_details(fund_df, current_nav_calc)
 
     return FundHistoryResponse(

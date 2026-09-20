@@ -29,7 +29,7 @@ enum class NavDestination(val label: String, val icon: ImageVector) {
     ANALYSIS("Analysis", Icons.Default.Analytics),
     PLANNING("Planning", Icons.Default.TrendingUp),
     EXPLORE("Explore", Icons.Default.Search),
-    QUANTUM("Quantum", Icons.Default.AutoAwesome)
+    REMINDERS("PDF Reports", Icons.Default.PictureAsPdf)
 }
 
 class MainActivity : ComponentActivity() {
@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
                                 currentUser = currentUser,
                                 onRefresh = { viewModel.refreshMarket() },
                                 onOpenProfile = { showProfileDialog = true },
-                                onOpenPdf = { currentDestination = NavDestination.QUANTUM },
+                                onOpenPdf = { currentDestination = NavDestination.REMINDERS },
                                 onOpenSettings = { showServerSettings = true }
                             )
                         },
@@ -112,8 +112,7 @@ class MainActivity : ComponentActivity() {
                                     NavDestination.PORTFOLIO,
                                     NavDestination.ANALYSIS,
                                     NavDestination.PLANNING,
-                                    NavDestination.EXPLORE,
-                                    NavDestination.QUANTUM
+                                    NavDestination.EXPLORE
                                 )
 
                                 bottomItems.forEach { dest ->
@@ -154,7 +153,6 @@ class MainActivity : ComponentActivity() {
                                         exploreSubTab = 0
                                         currentDestination = NavDestination.EXPLORE
                                     },
-                                    onNavigateToQuantum = { currentDestination = NavDestination.QUANTUM },
                                     onOpenSettings = { showServerSettings = true }
                                 )
                                 NavDestination.PORTFOLIO -> PortfolioScreen(
@@ -163,7 +161,7 @@ class MainActivity : ComponentActivity() {
                                         analysisSubTab = 0
                                         currentDestination = NavDestination.ANALYSIS
                                     },
-                                    onNavigateToReminders = { currentDestination = NavDestination.QUANTUM }
+                                    onNavigateToReminders = { currentDestination = NavDestination.REMINDERS }
                                 )
                                 NavDestination.ANALYSIS -> Column(modifier = Modifier.fillMaxSize()) {
                                     TabRow(
@@ -246,7 +244,7 @@ class MainActivity : ComponentActivity() {
                                         PlatformScreen(viewModel = viewModel)
                                     }
                                 }
-                                NavDestination.QUANTUM -> QAOAScreen()
+                                NavDestination.REMINDERS -> RemindersScreen(viewModel = viewModel)
                             }
                         }
                     }
