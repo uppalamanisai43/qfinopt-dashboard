@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QFinOpt — Project Presentation Deck</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+    
+    * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    code, pre { font-family: 'JetBrains Mono', monospace; }
+
+    body {
+      background-color: #080c14;
+      color: #f1f5f9;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    .slide {
+      display: none;
+      height: 100vh;
+      width: 100vw;
+      padding: 3.5rem 5rem;
+      overflow-y: auto;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .slide.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Custom scrollbar */
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+    .glow-blue { text-shadow: 0 0 24px rgba(59, 130, 246, 0.45); }
+    .glow-purple { text-shadow: 0 0 24px rgba(139, 92, 246, 0.45); }
+    .glow-green { text-shadow: 0 0 24px rgba(16, 185, 129, 0.45); }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(51, 65, 85, 0.65);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+    }
+
+    .glass-card-hover:hover {
+      border-color: rgba(96, 165, 250, 0.6);
+      transform: translateY(-2px);
+      transition: all 0.25s ease;
+    }
+
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body class="bg-[#080c14] text-slate-100 flex flex-col h-screen justify-between">
+
+  <!-- Top Global Header -->
+  <header class="fixed top-0 left-0 w-full px-8 py-4 flex justify-between items-center z-50 bg-[#080c14]/80 backdrop-blur-md border-b border-slate-800/80">
+    <div class="flex items-center space-x-3">
+      <span class="text-2xl">📈</span>
+      <span class="font-extrabold text-lg tracking-wider bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">QFinOpt</span>
+      <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/30">v3.0.0</span>
+    </div>
+    <div class="flex items-center space-x-6 text-xs text-slate-400">
+      <span id="slide-indicator" class="font-mono bg-slate-800/60 px-3 py-1 rounded-md border border-slate-700">Slide 1 / 15</span>
+      <button onclick="toggleFullScreen()" class="hover:text-white transition-colors" title="Toggle Fullscreen (F)">
+        <i class="fa-solid fa-expand text-sm"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Slides Container -->
+  <main class="flex-1 relative overflow-hidden flex items-center justify-center">
+
+    <!-- SLIDE 1: Title -->
+    <section class="slide active">
+      <div class="max-w-5xl mx-auto text-center space-y-6">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-950/60 border border-blue-500/30 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
+          <span>🚀 Major Project Presentation</span>
+          <span>•</span>
+          <span>FinTech & AI Innovation</span>
+        </div>
+        <h1 class="text-5xl md:text-7xl font-black tracking-tight leading-tight glow-blue">
+          QFinOpt
+        </h1>
+        <p class="text-xl md:text-2xl text-blue-200/90 font-medium max-w-3xl mx-auto leading-relaxed">
+          AI-Powered Mutual Fund Research, Monte Carlo Risk Simulation & Intelligent Portfolio Optimization
+        </p>
+        <p class="text-slate-400 text-base max-w-2xl mx-auto">
+          Democratizing institutional-grade quantitative finance, risk-adjusted forecasting, and optimal withdrawal timing for every Indian investor.
+        </p>
+        
+        <div class="pt-6 flex flex-wrap justify-center gap-3">
+          <span class="px-3.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-medium text-slate-300">📱 Native Android (Kotlin + Jetpack Compose)</span>
+          <span class="px-3.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-medium text-slate-300">⚡ Python FastAPI Async Backend</span>
+          <span class="px-3.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-medium text-slate-300">🤖 Gradient Boosting ML (74% Acc)</span>
+          <span class="px-3.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-medium text-slate-300">🎲 1,000-Path Monte Carlo GBM</span>
+          <span class="px-3.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-medium text-emerald-400">🛡️ SEBI Compliant Architecture</span>
+        </div>
+
+        <div class="pt-8 text-xs text-slate-500">
+          Press <kbd class="px-2 py-1 bg-slate-800 rounded border border-slate-700 text-slate-300">Space</kbd> or <kbd class="px-2 py-1 bg-slate-800 rounded border border-slate-700 text-slate-300">→</kbd> to navigate
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: Problem Statement -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-rose-400">The Problem</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">The Indian Retail Investment Dilemma</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5 pt-2">
+          <div class="glass-card p-6 border-rose-500/20 bg-gradient-to-br from-rose-950/20 to-slate-900/60">
+            <div class="text-3xl mb-3">💸</div>
+            <h3 class="text-lg font-bold text-rose-300">The 97% Regular Plan Trap</h3>
+            <p class="text-sm text-slate-300 mt-2 leading-relaxed">
+              Over 97% of Indian mutual fund accounts are locked in <strong>Regular Plans</strong>. Investors unknowingly forfeit <span class="text-rose-400 font-semibold">₹50,000 to ₹3,00,000</span> in hidden distributor commissions over a 10-year period.
+            </p>
+          </div>
+
+          <div class="glass-card p-6 border-amber-500/20 bg-gradient-to-br from-amber-950/20 to-slate-900/60">
+            <div class="text-3xl mb-3">📉</div>
+            <h3 class="text-lg font-bold text-amber-300">Zero Risk-Adjusted Metrics</h3>
+            <p class="text-sm text-slate-300 mt-2 leading-relaxed">
+              Retail applications only show trailing returns (1Y, 3Y, 5Y). Critical institutional indicators like the <strong>Sharpe Ratio, Sortino Ratio, CAPM Alpha, Beta, and Maximum Drawdown</strong> are completely absent for retail users.
+            </p>
+          </div>
+
+          <div class="glass-card p-6 border-purple-500/20 bg-gradient-to-br from-purple-950/20 to-slate-900/60">
+            <div class="text-3xl mb-3">📐</div>
+            <h3 class="text-lg font-bold text-purple-300">Misleading Linear Projections</h3>
+            <p class="text-sm text-slate-300 mt-2 leading-relaxed">
+              Traditional calculators assume unrealistic, straight-line growth (e.g., "12% every single year"). Markets fluctuate with volatility, sequencing risk, and cyclical drawdowns that standard calculators ignore.
+            </p>
+          </div>
+
+          <div class="glass-card p-6 border-blue-500/20 bg-gradient-to-br from-blue-950/20 to-slate-900/60">
+            <div class="text-3xl mb-3">🚪</div>
+            <h3 class="text-lg font-bold text-blue-300">No Scientific Exit Guidance</h3>
+            <p class="text-sm text-slate-300 mt-2 leading-relaxed">
+              Investors know when to buy through SIPs, but have zero quantitative guidance on <strong>when to redeem, rebalance, or withdraw safely</strong> without destroying their retirement corpus.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: Solution Overview -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">The Solution</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">QFinOpt: Full-Stack Financial Engineering</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5 pt-2">
+          <div class="glass-card p-6 border-blue-500/30">
+            <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 text-xl font-bold mb-4">
+              🤖
+            </div>
+            <h3 class="text-base font-bold text-white">AI Return Forecaster</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Gradient Boosting ML model trained on 5-year AMFI NAV history predicting 21-day forward trends with <strong>74.01% directional accuracy</strong> and actionable Buy/Hold/Exit confidence scores.
+            </p>
+          </div>
+
+          <div class="glass-card p-6 border-emerald-500/30">
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl font-bold mb-4">
+              🎲
+            </div>
+            <h3 class="text-base font-bold text-white">Monte Carlo Simulation</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              1,000-path Geometric Brownian Motion (GBM) stochastic engine providing realistic <strong>Bull, Base, and Bear market corridors</strong> and retirement corpus survival probabilities.
+            </p>
+          </div>
+
+          <div class="glass-card p-6 border-indigo-500/30">
+            <div class="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-xl font-bold mb-4">
+              ⚖️
+            </div>
+            <h3 class="text-base font-bold text-white">Modern Portfolio Theory</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Markowitz Efficient Frontier quadratic optimization calculating optimal asset allocations to maximize Sharpe ratio while minimizing portfolio risk and correlation.
+            </p>
+          </div>
+        </div>
+
+        <div class="glass-card p-5 border-slate-700 bg-slate-900/70 flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <span class="text-2xl">💡</span>
+            <div>
+              <h4 class="text-sm font-bold text-slate-200">100% Direct Plan Focus</h4>
+              <p class="text-xs text-slate-400">Zero distributor commissions, zero kickbacks, and strict alignment with SEBI retail investor protection guidelines.</p>
+            </div>
+          </div>
+          <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/30">0% Commission</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: Architecture Diagram -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-5">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-400">System Design</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">End-to-End System Architecture</h2>
+        </div>
+
+        <div class="glass-card p-6 border-slate-700/80 bg-slate-950/70 space-y-4">
+          <!-- Client Layer -->
+          <div class="p-3.5 rounded-lg bg-blue-950/30 border border-blue-500/30 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <span class="px-2.5 py-1 rounded bg-blue-500 text-black font-extrabold text-xs">CLIENT</span>
+              <span class="font-bold text-sm text-blue-200">Android Mobile Application (Kotlin 100%)</span>
+            </div>
+            <div class="flex gap-2 text-xs text-slate-400">
+              <span class="px-2 py-0.5 rounded bg-slate-800">Jetpack Compose</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800">Material 3</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800">MVVM</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800">Retrofit 2</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800">StateFlow</span>
+            </div>
+          </div>
+
+          <div class="flex justify-center text-slate-500 text-xs py-0.5">
+            <span>⬇️ RESTful HTTP/JSON APIs (OkHttp Client) ⬆️</span>
+          </div>
+
+          <!-- Backend API Layer -->
+          <div class="p-3.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <span class="px-2.5 py-1 rounded bg-emerald-500 text-black font-extrabold text-xs">BACKEND</span>
+              <span class="font-bold text-sm text-emerald-200">High-Performance FastAPI Async Server</span>
+            </div>
+            <div class="flex gap-2 text-xs text-slate-400">
+              <span class="px-2 py-0.5 rounded bg-slate-800">Python 3.10</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800">Uvicorn ASGI</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800">Pydantic</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800">25+ Endpoints</span>
+            </div>
+          </div>
+
+          <div class="flex justify-center text-slate-500 text-xs py-0.5">
+            <span>⬇️ Microservices & Mathematical Engine ⬇️</span>
+          </div>
+
+          <!-- Services Layer -->
+          <div class="grid grid-cols-4 gap-3">
+            <div class="p-3 rounded-lg bg-slate-900 border border-slate-700 text-center">
+              <div class="text-base mb-1">📊</div>
+              <div class="text-xs font-bold text-slate-200">fund_service</div>
+              <div class="text-[10px] text-slate-400 mt-1">Sharpe, Sortino, Alpha, Beta, ML</div>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900 border border-slate-700 text-center">
+              <div class="text-base mb-1">🎲</div>
+              <div class="text-xs font-bold text-slate-200">simulation_svc</div>
+              <div class="text-[10px] text-slate-400 mt-1">Monte Carlo GBM, XIRR Solver</div>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900 border border-slate-700 text-center">
+              <div class="text-base mb-1">📂</div>
+              <div class="text-xs font-bold text-slate-200">data_manager</div>
+              <div class="text-[10px] text-slate-400 mt-1">AMFI Live Feeds, Cache</div>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900 border border-slate-700 text-center">
+              <div class="text-base mb-1">💼</div>
+              <div class="text-xs font-bold text-slate-200">portfolio_svc</div>
+              <div class="text-[10px] text-slate-400 mt-1">Holdings, P&L, PDF Export</div>
+            </div>
+          </div>
+
+          <!-- Data Layer -->
+          <div class="p-3 rounded-lg bg-indigo-950/20 border border-indigo-500/30 flex justify-between items-center text-xs">
+            <span class="font-semibold text-indigo-300">Data & Model Repositories:</span>
+            <span class="text-slate-300">📁 87MB AMFI Daily History (296 Schemes)</span>
+            <span class="text-slate-300">🤖 HistGradientBoosting Model (joblib)</span>
+            <span class="text-slate-300">📡 Live AMFI NAV & Yahoo Finance Feeds</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Machine Learning Engine -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-purple-400">Artificial Intelligence</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">Machine Learning Return Forecaster</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4">
+            <div class="glass-card p-5 border-purple-500/30">
+              <h3 class="text-sm font-bold text-purple-300 mb-2">Model Specifications</h3>
+              <ul class="text-xs text-slate-300 space-y-2">
+                <li>• <strong>Algorithm:</strong> Histogram Gradient Boosting Regressor (`scikit-learn`)</li>
+                <li>• <strong>Objective:</strong> Predict 21-day forward cumulative return & directional conviction</li>
+                <li>• <strong>Training Strategy:</strong> Time-series chronological split (80% train, 20% test) — strict zero look-ahead bias</li>
+                <li>• <strong>Sample Size:</strong> 419,000+ daily AMFI trading records</li>
+              </ul>
+            </div>
+
+            <div class="glass-card p-5 border-slate-700">
+              <h3 class="text-sm font-bold text-slate-200 mb-2">12 Quantitative Feature Inputs</h3>
+              <div class="grid grid-cols-3 gap-2 text-[11px] text-slate-300 font-mono">
+                <span class="p-1.5 bg-slate-800/80 rounded">ret_5d</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">ret_10d</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">ret_21d</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">vol_10d</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">vol_30d</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">mom_ratio</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">rsi_14</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">nav_z</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">Sharpe</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">Alpha</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">Beta</span>
+                <span class="p-1.5 bg-slate-800/80 rounded">Exp_Ratio</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card p-6 border-emerald-500/30 bg-emerald-950/10 space-y-5">
+            <h3 class="text-base font-bold text-emerald-400">Validated Experimental Results</h3>
+            
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-slate-300 font-medium">Directional Classification Accuracy</span>
+                  <span class="text-emerald-400 font-bold">74.01%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div class="bg-emerald-500 h-full rounded-full" style="width: 74%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-slate-300 font-medium">High-Conviction Win Rate (Top 25%)</span>
+                  <span class="text-emerald-400 font-bold">75.01%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div class="bg-emerald-400 h-full rounded-full" style="width: 75%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-slate-300 font-medium">Weighted F1-Score</span>
+                  <span class="text-emerald-400 font-bold">85.06%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div class="bg-teal-400 h-full rounded-full" style="width: 85%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-slate-300 font-medium">Out-of-Sample Monthly Alpha</span>
+                  <span class="text-emerald-400 font-bold">+0.89% / mo (p &lt; 0.01)</span>
+                </div>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div class="bg-indigo-400 h-full rounded-full" style="width: 65%"></div>
+                </div>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-400 pt-2 border-t border-slate-800">
+              ⚡ Demonstrates genuine predictive power beyond random walk (50%) and market beta.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: Quantitative Mathematical Suite -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-400">Financial Mathematics</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">Quantitative Risk & Return Architecture</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5">
+          <div class="glass-card p-5 border-slate-700">
+            <h3 class="text-sm font-bold text-blue-300 mb-2">Sharpe & Sortino Ratios</h3>
+            <p class="text-xs text-slate-400 mb-3">Rewards return while penalizing total vs. downside volatility:</p>
+            <div class="p-3 bg-slate-900/90 rounded border border-slate-800 font-mono text-[11px] text-blue-200">
+              Sharpe = (E[R] - Rf) / σ<br><br>
+              Sortino = (E[R] - Rf) / σ_down
+            </div>
+            <p class="text-[11px] text-slate-400 mt-3">Calculated dynamically using 6.5% RBI 10Y G-Sec risk-free rate.</p>
+          </div>
+
+          <div class="glass-card p-5 border-slate-700">
+            <h3 class="text-sm font-bold text-indigo-300 mb-2">CAPM Alpha & Beta</h3>
+            <p class="text-xs text-slate-400 mb-3">Isolates manager skill from broad market movement:</p>
+            <div class="p-3 bg-slate-900/90 rounded border border-slate-800 font-mono text-[11px] text-indigo-200">
+              R_i - Rf = α + β(R_m - Rf) + ε<br><br>
+              Benchmark: Nifty 50 TRI
+            </div>
+            <p class="text-[11px] text-slate-400 mt-3">Filters out funds that simply ride bull market beta.</p>
+          </div>
+
+          <div class="glass-card p-5 border-slate-700">
+            <h3 class="text-sm font-bold text-rose-300 mb-2">Maximum Drawdown (MDD)</h3>
+            <p class="text-xs text-slate-400 mb-3">Quantifies worst historical loss peak-to-trough:</p>
+            <div class="p-3 bg-slate-900/90 rounded border border-slate-800 font-mono text-[11px] text-rose-200">
+              MDD = min_t (NAV_t - Peak_t) / Peak_t<br><br>
+              Evaluates capital preservation
+            </div>
+            <p class="text-[11px] text-slate-400 mt-3">Protects investors from high-beta funds vulnerable to crashes.</p>
+          </div>
+        </div>
+
+        <div class="glass-card p-5 border-slate-700 bg-slate-900/60 flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-bold text-white">XIRR (Extended Internal Rate of Return)</h4>
+            <p class="text-xs text-slate-400">Solves exact annualized return for irregular SIP cashflows using bisection numerical root-finding.</p>
+          </div>
+          <span class="font-mono text-xs px-3 py-1 bg-slate-800 text-slate-300 rounded border border-slate-700">Σ [ C_i / (1 + r)^(t_i) ] = 0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: Monte Carlo Simulation -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Stochastic Modeling</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">1,000-Path Monte Carlo GBM Engine</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4">
+            <div class="glass-card p-5 border-amber-500/30">
+              <h3 class="text-sm font-bold text-amber-300 mb-2">Geometric Brownian Motion (GBM)</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Replaces misleading single-line compound interest with stochastic differential modeling of market uncertainty:
+              </p>
+              <div class="p-3 bg-slate-900/90 rounded border border-slate-800 font-mono text-xs text-amber-200 mt-3">
+                dS_t = μ S_t dt + σ S_t dW_t
+              </div>
+              <p class="text-[11px] text-slate-400 mt-3">
+                Where <code>μ</code> is drift (historical CAGR), <code>σ</code> is annual volatility, and <code>dW_t</code> is Wiener process Brownian noise.
+              </p>
+            </div>
+
+            <div class="glass-card p-5 border-slate-700">
+              <h3 class="text-sm font-bold text-slate-200 mb-2">Dual Applications in App</h3>
+              <ul class="text-xs text-slate-300 space-y-2">
+                <li>• <strong>SIP Wealth Accumulation:</strong> Simulates monthly inflows across 1,000 market paths over 1–30 years.</li>
+                <li>• <strong>Retirement Withdrawal Timing:</strong> Evaluates corpus survival probabilities under varying monthly SWP withdrawal pressures.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="glass-card p-6 border-slate-700 bg-slate-950/70 space-y-4">
+            <h3 class="text-sm font-bold text-slate-200">Probabilistic Return Corridors</h3>
+            
+            <div class="p-4 rounded-lg bg-emerald-950/30 border border-emerald-500/30">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-emerald-400">🟢 Bull Case (90th Percentile)</span>
+                <span class="text-xs font-mono text-slate-300">Strong economic cycle</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Top decile trajectory when fund outperforms expectations.</p>
+            </div>
+
+            <div class="p-4 rounded-lg bg-blue-950/30 border border-blue-500/30">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-blue-400">🔵 Base Case (50th Percentile)</span>
+                <span class="text-xs font-mono text-slate-300">Median realistic outcome</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Expected median growth used for primary milestone planning.</p>
+            </div>
+
+            <div class="p-4 rounded-lg bg-rose-950/30 border border-rose-500/30">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-rose-400">🔴 Bear Case (10th Percentile)</span>
+                <span class="text-xs font-mono text-slate-300">Stress-test scenario</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Worst-case floor guaranteeing the investor is prepared for severe drawdowns.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: App Walkthrough - Dashboard & Analysis -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-400">Mobile Experience</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">Live Dashboard & Deep AI Analysis</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4">
+            <div class="glass-card p-5 border-slate-700">
+              <h3 class="text-base font-bold text-blue-300">🏠 Home & Market Pulse</h3>
+              <ul class="text-xs text-slate-300 space-y-2 mt-2">
+                <li>• <strong>Real-time Ticker:</strong> Nifty 50, Sensex, Gold live indices.</li>
+                <li>• <strong>Market Sentiment Badge:</strong> 🟢 BULLISH / 🔴 BEARISH based on momentum and moving average crossovers.</li>
+                <li>• <strong>Top AI Funds:</strong> Filter by Large Cap, Mid Cap, Flexi Cap, ELSS, Debt.</li>
+              </ul>
+            </div>
+
+            <div class="glass-card p-5 border-slate-700">
+              <h3 class="text-base font-bold text-emerald-300">📊 Deep AI Analysis Screen</h3>
+              <ul class="text-xs text-slate-300 space-y-2 mt-2">
+                <li>• <strong>Interactive Canvas Chart:</strong> 1M, 3M, 6M, 1Y, 3Y, 5Y historical performance.</li>
+                <li>• <strong>Confidence Corridor:</strong> 30-day forward AI trajectory with 95% uncertainty bands.</li>
+                <li>• <strong>Actionable Signal:</strong> Immediate recommendation (<code>ACCUMULATE</code>, <code>BUY</code>, <code>HOLD</code>).</li>
+                <li>• <strong>12-Metric Audit Grid:</strong> Sharpe, Sortino, Alpha, Beta, MDD, Expense Ratio.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="flex justify-center">
+            <div class="p-2.5 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl max-w-[280px]">
+              <img src="./screenshots/dashboard.png" alt="Dashboard Screen" class="rounded-xl w-full object-cover shadow-inner">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: App Walkthrough - Portfolio & Planning -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Mobile Experience</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">Portfolio Tracking & SIP Compounder</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 items-center">
+          <div class="flex justify-center order-2 md:order-1">
+            <div class="p-2.5 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl max-w-[280px]">
+              <img src="./screenshots/portfolio.png" alt="Portfolio Screen" class="rounded-xl w-full object-cover shadow-inner">
+            </div>
+          </div>
+
+          <div class="space-y-4 order-1 md:order-2">
+            <div class="glass-card p-5 border-slate-700">
+              <h3 class="text-base font-bold text-emerald-300">💼 Live Portfolio & XIRR</h3>
+              <ul class="text-xs text-slate-300 space-y-2 mt-2">
+                <li>• <strong>Holdings Management:</strong> Add fund, units, purchase NAV, investment date.</li>
+                <li>• <strong>Live P&L:</strong> Total invested vs current valuation with daily delta.</li>
+                <li>• <strong>True XIRR:</strong> Cash-flow weighted annualized return.</li>
+                <li>• <strong>Watchlist:</strong> 1-tap tracking of promising mutual funds.</li>
+              </ul>
+            </div>
+
+            <div class="glass-card p-5 border-slate-700">
+              <h3 class="text-base font-bold text-indigo-300">📅 SIP Compounder</h3>
+              <ul class="text-xs text-slate-300 space-y-2 mt-2">
+                <li>• <strong>Custom Amount & Horizon:</strong> ₹500 to ₹1,00,000+ over 1–30 years.</li>
+                <li>• <strong>Return Assumption Slider:</strong> Adjust 8% to 15% with live milestone updates.</li>
+                <li>• <strong>Wealth Multiplier:</strong> Visual breakdown of invested capital vs compounding profit.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: App Walkthrough - Retirement & Withdrawal -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-purple-400">Mobile Experience</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">Retirement Planning & Optimal Withdrawal</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 items-center">
+          <div class="space-y-4">
+            <div class="glass-card p-5 border-purple-500/30">
+              <h3 class="text-base font-bold text-purple-300">🎯 Withdrawal Timing Optimizer</h3>
+              <p class="text-xs text-slate-300 leading-relaxed mt-1">
+                Answers the #1 question of retirees: <em>"When is the optimal day to withdraw my corpus to minimize sequencing risk and avoid selling during market crashes?"</em>
+              </p>
+              <ul class="text-xs text-slate-300 space-y-2 mt-3">
+                <li>• Evaluates market valuation, momentum, and drawdown indicators.</li>
+                <li>• Recommends staggered systematic withdrawal periods (SWP).</li>
+              </ul>
+            </div>
+
+            <div class="glass-card p-5 border-slate-700">
+              <h3 class="text-base font-bold text-amber-300">Corpus Survival Probability</h3>
+              <p class="text-xs text-slate-300 leading-relaxed mt-1">
+                Computes the mathematical probability that an investor's retirement nest egg will outlast a 20-30 year retirement horizon under variable inflation.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex justify-center">
+            <div class="p-2.5 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl max-w-[280px]">
+              <img src="./screenshots/retirement.png" alt="Retirement Screen" class="rounded-xl w-full object-cover shadow-inner">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 11: App Walkthrough - Alerts & Reports -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Productivity & Utilities</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">Smart Alerts, Reminders & PDF Reports</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 items-center">
+          <div class="flex justify-center space-x-3">
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-700 shadow-xl max-w-[210px]">
+              <img src="./screenshots/reminders.png" alt="Reminders Hub" class="rounded-lg w-full object-cover">
+            </div>
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-700 shadow-xl max-w-[210px]">
+              <img src="./screenshots/calendar_sync.png" alt="Calendar Sync" class="rounded-lg w-full object-cover">
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="glass-card p-5 border-slate-700">
+              <h3 class="text-sm font-bold text-amber-300">🔔 Dual-Tab Alert Hub</h3>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                Manages scheduled SIP due dates, exit load expiries, and tax-harvesting reminders with customized audio and visual alerts.
+              </p>
+            </div>
+
+            <div class="glass-card p-5 border-slate-700">
+              <h3 class="text-sm font-bold text-blue-300">📅 Native Calendar Sync</h3>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                1-tap export of SIP installment dates and rebalancing deadlines directly to Google Calendar / Outlook with alarm notifications.
+              </p>
+            </div>
+
+            <div class="glass-card p-5 border-slate-700">
+              <h3 class="text-sm font-bold text-emerald-300">📄 Executive PDF Reports</h3>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                Generates branded, downloadable PDF audit reports summarizing portfolio health, risk metrics, and tax harvesting suggestions.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 12: Technical Implementation & Stack -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-400">Engineering Rigor</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">Production Technology Stack</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="glass-card p-6 border-blue-500/30 space-y-4">
+            <div class="flex items-center space-x-3">
+              <span class="text-2xl">📱</span>
+              <h3 class="text-base font-bold text-blue-300">Android Mobile Client</h3>
+            </div>
+            <table class="w-full text-xs text-left">
+              <tr class="border-b border-slate-800">
+                <td class="py-2 text-slate-400">Language</td>
+                <td class="py-2 font-bold text-white">Kotlin 100%</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2 text-slate-400">UI Architecture</td>
+                <td class="py-2 font-bold text-white">Jetpack Compose + Material 3</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2 text-slate-400">Design Pattern</td>
+                <td class="py-2 font-bold text-white">MVVM + Clean Architecture</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2 text-slate-400">State Management</td>
+                <td class="py-2 font-bold text-white">Kotlin Coroutines + StateFlow</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2 text-slate-400">Networking</td>
+                <td class="py-2 font-bold text-white">Retrofit 2 + OkHttp (HTTP/2)</td>
+              </tr>
+              <tr>
+                <td class="py-2 text-slate-400">Charts Engine</td>
+                <td class="py-2 font-bold text-white">Custom Native Canvas (Zero external bloat)</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="glass-card p-6 border-emerald-500/30 space-y-4">
+            <div class="flex items-center space-x-3">
+              <span class="text-2xl">⚡</span>
+              <h3 class="text-base font-bold text-emerald-300">Python AI & Analytics Backend</h3>
+            </div>
+            <table class="w-full text-xs text-left">
+              <tr class="border-b border-slate-800">
+                <td class="py-2 text-slate-400">Framework</td>
+                <td class="py-2 font-bold text-white">FastAPI + Uvicorn (ASGI)</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2 text-slate-400">Machine Learning</td>
+                <td class="py-2 font-bold text-white">scikit-learn (HistGradientBoosting)</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2 text-slate-400">Scientific Computing</td>
+                <td class="py-2 font-bold text-white">NumPy, SciPy (Optimization & stats)</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2 text-slate-400">Data Processing</td>
+                <td class="py-2 font-bold text-white">Pandas DataFrame vectorization</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2 text-slate-400">Market Feeds</td>
+                <td class="py-2 font-bold text-white">AMFI Official API + Yahoo Finance</td>
+              </tr>
+              <tr>
+                <td class="py-2 text-slate-400">PDF Generator</td>
+                <td class="py-2 font-bold text-white">fpdf2 (Vector PDF generation)</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 13: SEBI Regulatory Compliance -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Regulatory Framework</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">SEBI Compliance & Data Governance</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5">
+          <div class="glass-card p-5 border-slate-700">
+            <div class="text-2xl mb-2">⚖️</div>
+            <h3 class="text-sm font-bold text-white">Research Compliance</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Formulated under the <strong>SEBI (Research Analysts) Regulations, 2014</strong>. All algorithms provide educational research and algorithmic analytics rather than personalized custodial advice.
+            </p>
+          </div>
+
+          <div class="glass-card p-5 border-slate-700">
+            <div class="text-2xl mb-2">🛡️</div>
+            <h3 class="text-sm font-bold text-white">Zero Custodial Risk</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              QFinOpt <strong>never touches, stores, or handles investor money</strong>. All purchase decisions are routed to official AMCs or registered SEBI brokers (Groww, Zerodha, MF Central).
+            </p>
+          </div>
+
+          <div class="glass-card p-5 border-slate-700">
+            <div class="text-2xl mb-2">🔒</div>
+            <h3 class="text-sm font-bold text-white">Privacy & Security</h3>
+            <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+              Salted SHA-256 password hashing, token-based session management, and zero third-party telemetry or ad trackers tracking user portfolio values.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 text-center">
+          <p class="text-xs text-slate-400 italic">
+            "Mutual Fund investments are subject to market risks. Please read all scheme-related documents carefully before investing."
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 14: Project Demonstration & Highlights -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-400">Impact & Verification</span>
+          <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">Demonstration & Key Highlights</h2>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-4 text-center">
+          <div class="glass-card p-5 border-blue-500/30">
+            <div class="text-3xl font-black text-blue-400">296+</div>
+            <div class="text-xs font-semibold text-slate-300 mt-1">Curated Mutual Funds</div>
+            <div class="text-[10px] text-slate-500 mt-1">5–10 years daily history</div>
+          </div>
+
+          <div class="glass-card p-5 border-emerald-500/30">
+            <div class="text-3xl font-black text-emerald-400">74.01%</div>
+            <div class="text-xs font-semibold text-slate-300 mt-1">ML Model Accuracy</div>
+            <div class="text-[10px] text-slate-500 mt-1">Directional win rate</div>
+          </div>
+
+          <div class="glass-card p-5 border-purple-500/30">
+            <div class="text-3xl font-black text-purple-400">1,000</div>
+            <div class="text-xs font-semibold text-slate-300 mt-1">Monte Carlo Paths</div>
+            <div class="text-[10px] text-slate-500 mt-1">Real-time stochastic engine</div>
+          </div>
+
+          <div class="glass-card p-5 border-amber-500/30">
+            <div class="text-3xl font-black text-amber-400">&lt; 15 ms</div>
+            <div class="text-xs font-semibold text-slate-300 mt-1">API Response Time</div>
+            <div class="text-[10px] text-slate-500 mt-1">Async vectorized backend</div>
+          </div>
+        </div>
+
+        <div class="glass-card p-6 border-slate-700 bg-slate-900/60 space-y-3">
+          <h3 class="text-sm font-bold text-white">Live Demonstration Capabilities</h3>
+          <div class="grid md:grid-cols-3 gap-3 text-xs text-slate-300">
+            <div class="flex items-start space-x-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Live Market Ticker:</strong> Real-time Nifty 50 & Gold fetch.</span>
+            </div>
+            <div class="flex items-start space-x-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Dynamic Forecast Corridor:</strong> Live 30-day projection on any fund.</span>
+            </div>
+            <div class="flex items-start space-x-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Instant AMFI Scheme Search:</strong> Queries across 14,000+ Indian schemes.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 15: Future Roadmap & Conclusion -->
+    <section class="slide">
+      <div class="max-w-5xl mx-auto w-full text-center space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Looking Forward</span>
+          <h2 class="text-4xl md:text-5xl font-extrabold text-white mt-1">Future Scope & Conclusion</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto text-left pt-2">
+          <div class="glass-card p-5 border-slate-700">
+            <div class="text-2xl mb-2">⚡</div>
+            <h3 class="text-sm font-bold text-white">Direct Order Execution</h3>
+            <p class="text-xs text-slate-400 mt-1">Integration with BSE StAR MF / MF Central APIs for 1-tap in-app SIP mandate registration.</p>
+          </div>
+
+          <div class="glass-card p-5 border-slate-700">
+            <div class="text-2xl mb-2">📊</div>
+            <h3 class="text-sm font-bold text-white">Direct Stocks Analysis</h3>
+            <p class="text-xs text-slate-400 mt-1">Extending the quantitative factor scoring engine to NSE/BSE listed equities.</p>
+          </div>
+
+          <div class="glass-card p-5 border-slate-700">
+            <div class="text-2xl mb-2">🔍</div>
+            <h3 class="text-sm font-bold text-white">Portfolio Overlap X-Ray</h3>
+            <p class="text-xs text-slate-400 mt-1">Automatic detection of hidden underlying stock overlap across multiple funds.</p>
+          </div>
+        </div>
+
+        <div class="pt-6">
+          <div class="inline-block p-6 rounded-2xl bg-gradient-to-r from-blue-900/40 via-indigo-900/40 to-purple-900/40 border border-blue-500/30">
+            <h3 class="text-2xl font-black text-white">Thank You!</h3>
+            <p class="text-sm text-blue-200 mt-1">QFinOpt — Institutional Quantitative Finance, For Everyone.</p>
+            <div class="mt-4 flex justify-center gap-4 text-xs font-mono text-slate-400">
+              <span>GitHub: uppalamanisai43/qfinopt-dashboard</span>
+              <span>•</span>
+              <span>Questions & Answers</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation Bar & Controls -->
+  <footer class="fixed bottom-0 left-0 w-full px-8 py-3 flex justify-between items-center z-50 bg-[#080c14]/90 backdrop-blur-md border-t border-slate-800/80">
+    <div class="flex items-center space-x-2">
+      <button onclick="prevSlide()" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition border border-slate-700 flex items-center space-x-1.5">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Previous</span>
+      </button>
+      <button onclick="nextSlide()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition shadow-lg shadow-blue-600/30 flex items-center space-x-1.5">
+        <span>Next</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+
+    <!-- Slide progress line -->
+    <div class="flex-1 max-w-md mx-8 hidden sm:block">
+      <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+        <div id="progress-bar" class="progress-bar bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full" style="width: 6.66%"></div>
+      </div>
+    </div>
+
+    <div class="text-xs text-slate-400 flex items-center space-x-3">
+      <span class="hidden md:inline">Use <kbd class="px-1.5 py-0.5 bg-slate-800 rounded text-slate-300">←</kbd> <kbd class="px-1.5 py-0.5 bg-slate-800 rounded text-slate-300">→</kbd> to change slides</span>
+    </div>
+  </footer>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const indicator = document.getElementById('slide-indicator');
+    const progressBar = document.getElementById('progress-bar');
+
+    function updateSlide() {
+      slides.forEach((slide, index) => {
+        if (index === currentSlide) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      indicator.textContent = `Slide ${currentSlide + 1} / ${totalSlides}`;
+      const pct = ((currentSlide + 1) / totalSlides) * 100;
+      progressBar.style.width = `${pct}%`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => alert(err.message));
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFullScreen();
+      } else if (e.key === 'Home') {
+        currentSlide = 0;
+        updateSlide();
+      } else if (e.key === 'End') {
+        currentSlide = totalSlides - 1;
+        updateSlide();
+      }
+    });
+  </script>
+</body>
+</html>
