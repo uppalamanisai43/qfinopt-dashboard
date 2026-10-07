@@ -1053,23 +1053,33 @@ with tab3:
         values  = list((plot_df["NAV_Value"]/base - 1)*100)
         source_label = "📁 Historical CSV (live NAV history unavailable for this fund's code)"
 
-    recent_window = values[-30:] if len(values) > 30 else values
-    recent_rets   = np.diff(recent_window) if len(recent_window) > 1 else [0]
-    mu_trend      = float(np.mean(recent_rets)) if len(recent_rets) > 0 else 0.0
+    if len(values) >= 5:
+        w_len = min(14, len(values))
+        w_vals = np.array(values[-w_len:], dtype=float)
+        x_pts = np.arange(w_len)
+        slope_reg, _ = np.polyfit(x_pts, w_vals, 1)  # % change per day
+        slope_5d = (w_vals[-1] - w_vals[max(0, w_len - 5)]) / max(1, min(4, w_len - 1))
+        mu_trend = float(0.60 * slope_5d + 0.40 * slope_reg)
+    elif len(values) >= 2:
+        mu_trend = float(values[-1] - values[-2])
+    else:
+        mu_trend = 0.0
 
-    if mu_trend > 0.01:
+    if mu_trend > 0.02:
         trend_label, trend_icon = "Trending UP", "📈"
-    elif mu_trend < -0.01:
+    elif mu_trend < -0.02:
         trend_label, trend_icon = "Trending DOWN", "📉"
     else:
         trend_label, trend_icon = "Flat / Sideways", "➖"
 
-    # ── Predicted trend (computed up front so we can show a metric AND the chart) ──
+    # ── Predicted trend (damped AR(1) momentum so forecast reflects real trajectory) ──
     fut_dates, fut_vals, predicted_final = [], [], None
     if show_forecast3 and len(values) > 0:
         last_val, last_date = values[-1], dates[-1]
         fut_dates = list(pd.bdate_range(last_date + pd.Timedelta(days=1), periods=forecast_days3))
-        fut_vals  = [last_val + mu_trend*(i+1) for i in range(forecast_days3)]
+        decay = 0.95
+        cum_delta = [sum(mu_trend * (decay**t) for t in range(i+1)) for i in range(forecast_days3)]
+        fut_vals  = [last_val + d for d in cum_delta]
         predicted_final = fut_vals[-1] if fut_vals else last_val
 
     # ── Headline metrics: current value, predicted value, predicted NAV ──
@@ -1137,16 +1147,14 @@ with tab3:
         )
         st.plotly_chart(fig4, use_container_width=True, config={"displayModeBar": False})
 
-    if mu_trend > 0.01:
+    if mu_trend > 0.02:
         st.success(
-            f"📈 **{selected_fund[:50]} is trending UP** — average change "
-            f"~{mu_trend:+.3f}%/day over the recent window. If this holds, "
-            f"the forecast projects continued growth.")
-    elif mu_trend < -0.01:
+            f"📈 **{selected_fund[:50]} is trending UP** — average trajectory "
+            f"~{mu_trend:+.3f}%/day over the recent window. Forecast projects continued growth.")
+    elif mu_trend < -0.02:
         st.error(
-            f"📉 **{selected_fund[:50]} is trending DOWN** — average change "
-            f"~{mu_trend:+.3f}%/day over the recent window. If this holds, "
-            f"the forecast projects continued decline.")
+            f"📉 **{selected_fund[:50]} is trending DOWN** — average trajectory "
+            f"~{mu_trend:+.3f}%/day over the recent window. Forecast projects continued decline.")
     else:
         st.info(
             f"➖ **{selected_fund[:50]} is roughly flat** — no strong "
@@ -1187,26 +1195,39 @@ with tab4:
     if ml_model is not None and len(fund_df) >= 15:
         feat_df = extract_fund_features(fund_df)
         if feat_df is not None:
-            pred_ret = float(ml_model.predict(feat_df)[0])
+            raw_pred = float(ml_model.predict(feat_df)[0])
+            baseline_drift = 0.023
+            excess_alpha = raw_pred - baseline_drift
+
+            r5 = float(feat_df['ret_5d'].iloc[0])
+            r10 = float(feat_df['ret_10d'].iloc[0])
+            r21 = float(feat_df['ret_21d'].iloc[0])
+            rsi = float(feat_df['rsi_14'].iloc[0])
+
+            # Calibrated 21-day return blending model alpha with observed directional velocity
+            mom_component = 0.40 * r5 + 0.25 * r10 + 0.15 * r21
+            rsi_adj = (rsi - 50.0) / 100.0 * 0.01
+            pred_ret = excess_alpha + mom_component + rsi_adj
+
             pred_21d_ret_pct = round(pred_ret * 100.0, 2)
             pred_target_nav = round(display_nav * (1.0 + pred_ret), 2)
 
-            if pred_ret >= 0.035:
+            if pred_ret >= 0.030 and r5 > 0:
                 signal = "STRONG BUY 🚀"
-                conviction_score = min(92.0, 75.0 + (pred_ret - 0.035) * 200.0)
-                win_prob = min(91.5, 78.0 + (pred_ret - 0.035) * 150.0)
-            elif pred_ret >= 0.01:
+                conviction_score = min(92.0, 75.0 + (pred_ret - 0.030) * 200.0)
+                win_prob = min(91.5, 78.0 + pred_ret * 120.0)
+            elif pred_ret >= 0.008:
                 signal = "ACCUMULATE 📈"
-                conviction_score = 72.0
-                win_prob = min(82.0, 72.0 + pred_ret * 120.0)
-            elif pred_ret >= -0.015:
+                conviction_score = min(78.0, 65.0 + pred_ret * 150.0)
+                win_prob = min(82.0, 68.0 + pred_ret * 100.0)
+            elif pred_ret >= -0.008:
                 signal = "HOLD / NEUTRAL ⚖️"
-                conviction_score = 58.0
-                win_prob = 62.0 + pred_ret * 100.0
+                conviction_score = 55.0
+                win_prob = 52.0 + pred_ret * 100.0
             else:
                 signal = "CAUTION / TRIM ⚠️"
-                conviction_score = 65.0
-                win_prob = max(38.0, 52.0 + pred_ret * 150.0)
+                conviction_score = max(35.0, 65.0 + pred_ret * 200.0)
+                win_prob = max(28.0, 48.0 + pred_ret * 150.0)
 
             # Metric cards
             m1, m2, m3, m4 = st.columns(4)
@@ -1499,13 +1520,19 @@ with tab6:
                 line=dict(color=color, width=2),
                 hovertemplate="%{x|%d %b %Y}<br><b>%{y:.2f}%</b><extra>" + fund[:28] + "</extra>"))
 
-            if show_forecast:
-                rets = fdf["Daily_Return_%"].dropna().tail(90)
-                mu   = rets.mean() if len(rets) > 0 else 0
+            if show_forecast and len(values) >= 3:
+                w_len = min(14, len(values))
+                w_vals = np.array(values[-w_len:], dtype=float)
+                x_pts = np.arange(w_len)
+                slope_reg, _ = np.polyfit(x_pts, w_vals, 1)  # % per day
+                slope_5d = (w_vals[-1] - w_vals[max(0, w_len - 5)]) / max(1, min(4, w_len - 1))
+                mu_f = float(0.60 * slope_5d + 0.40 * slope_reg)
+                decay = 0.95
                 last_val, last_date = values[-1], dates[-1]
                 fut_dates = list(pd.bdate_range(
                     last_date + pd.Timedelta(days=1), periods=forecast_days))
-                fut_vals = [last_val + mu*(i+1) for i in range(forecast_days)]
+                cum_delta = [sum(mu_f * (decay**t) for t in range(i+1)) for i in range(forecast_days)]
+                fut_vals = [last_val + d for d in cum_delta]
                 fig6.add_trace(go.Scatter(
                     x=[last_date]+fut_dates, y=[last_val]+fut_vals,
                     mode="lines", name=f"{fund[:22]} (forecast)",
@@ -1545,10 +1572,9 @@ with tab6:
                      hide_index=True)
         if show_forecast:
             st.caption(
-                "Forecast = straight-line trend using each fund's average "
-                "daily return over its last 90 trading days. Not a "
-                "guarantee of future performance. Click a legend entry to "
-                "show/hide that fund.")
+                "Forecast = Damped momentum trajectory using each fund's recent directional slope "
+                "(14D regression + 5D velocity). Captures both upward and downward market momentum. "
+                "Click a legend entry to show/hide that fund.")
     elif len(compare_list) > 15:
         st.warning("Please select 15 funds or fewer for a readable chart.")
     else:

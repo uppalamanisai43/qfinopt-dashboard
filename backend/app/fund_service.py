@@ -132,52 +132,66 @@ def compute_ml_prediction_details(fund_df: pd.DataFrame, display_nav: float) -> 
         return pred_21d_ret_pct, pred_target_nav, win_probability, signal, conviction_score, key_drivers
 
     try:
-        pred_ret = float(model.predict(feat_df)[0])
+        raw_pred = float(model.predict(feat_df)[0])
+        baseline_drift = 0.023
+        excess_alpha = raw_pred - baseline_drift
+
+        r5 = float(feat_df['ret_5d'].iloc[0])
+        r10 = float(feat_df['ret_10d'].iloc[0])
+        r21 = float(feat_df['ret_21d'].iloc[0])
+        rsi = float(feat_df['rsi_14'].iloc[0])
+
+        # Directional momentum drag & RSI oscillator adjustment
+        mom_component = 0.40 * r5 + 0.25 * r10 + 0.15 * r21
+        rsi_adj = (rsi - 50.0) / 100.0 * 0.01
+        pred_ret = excess_alpha + mom_component + rsi_adj
+
         pred_21d_ret_pct = round(pred_ret * 100.0, 2)
         pred_target_nav = round(display_nav * (1.0 + pred_ret), 2)
 
-        if pred_ret >= 0.035:
+        if pred_ret >= 0.030 and r5 > 0:
             signal = "STRONG BUY"
-            conviction_score = min(92.0, 75.0 + (pred_ret - 0.035) * 200.0)
-            win_probability = min(91.5, 78.0 + (pred_ret - 0.035) * 150.0)
-        elif pred_ret >= 0.01:
+            conviction_score = min(92.0, 75.0 + (pred_ret - 0.030) * 200.0)
+            win_probability = min(91.5, 78.0 + pred_ret * 120.0)
+        elif pred_ret >= 0.008:
             signal = "ACCUMULATE"
-            conviction_score = 72.0
-            win_probability = min(82.0, 72.0 + pred_ret * 120.0)
-        elif pred_ret >= -0.015:
+            conviction_score = min(78.0, 65.0 + pred_ret * 150.0)
+            win_probability = min(82.0, 68.0 + pred_ret * 100.0)
+        elif pred_ret >= -0.008:
             signal = "HOLD / NEUTRAL"
-            conviction_score = 58.0
-            win_probability = 62.0 + pred_ret * 100.0
+            conviction_score = 55.0
+            win_probability = 52.0 + pred_ret * 100.0
         else:
             signal = "CAUTION / TRIM"
-            conviction_score = 65.0
-            win_probability = max(38.0, 52.0 + pred_ret * 150.0)
+            conviction_score = max(35.0, 65.0 + pred_ret * 200.0)
+            win_probability = max(28.0, 48.0 + pred_ret * 150.0)
 
         # Feature interpretation for Explainable AI (XAI)
         mom = float(feat_df['mom_ratio'].iloc[0])
         ret5 = float(feat_df['ret_5d'].iloc[0]) * 100.0
         ret21 = float(feat_df['ret_21d'].iloc[0]) * 100.0
-        rsi = float(feat_df['rsi_14'].iloc[0])
         alpha = float(feat_df['Alpha'].iloc[0])
         sharpe = float(feat_df['Sharpe'].iloc[0])
         vol = float(feat_df['vol_10d'].iloc[0]) * 100.0
         ter = float(feat_df['Expense_Ratio'].iloc[0])
 
         # Driver 1: Momentum & Inflows
-        if mom >= 0.4:
-            key_drivers.append(f"Momentum Ratio (+{mom:.2f}): Strong short-term buying inflows ({'+' if ret5 >= 0 else ''}{ret5:.2f}% 5D return).")
-        elif mom >= 0.0:
+        if mom >= 0.4 and ret5 > 0:
+            key_drivers.append(f"Momentum Ratio (+{mom:.2f}): Strong short-term buying inflows (+{ret5:.2f}% 5D return).")
+        elif mom >= 0.0 and ret5 >= 0:
             key_drivers.append(f"Momentum Ratio (+{mom:.2f}): Steady buying pressure supporting the price trend.")
+        elif ret5 < -1.0:
+            key_drivers.append(f"Downside Velocity ({ret5:.2f}% 5D): Short-term profit taking and downward pressure observed.")
         else:
             key_drivers.append(f"Momentum Ratio ({mom:.2f}): Short-term consolidation phase after {ret21:.2f}% 21D movement.")
 
         # Driver 2: RSI Technical Health
         if rsi < 38.0:
-            key_drivers.append(f"RSI-14 ({rsi:.1f}): Near oversold territory — favorable technical bounce setup.")
+            key_drivers.append(f"RSI-14 ({rsi:.1f}): Near oversold territory — caution advised until reversal confirms.")
         elif rsi <= 62.0:
-            key_drivers.append(f"RSI-14 ({rsi:.1f}): Healthy accumulation zone with room for continued upside.")
+            key_drivers.append(f"RSI-14 ({rsi:.1f}): Healthy accumulation zone with balanced risk-reward.")
         else:
-            key_drivers.append(f"RSI-14 ({rsi:.1f}): Elevated momentum — staged SIP entry recommended.")
+            key_drivers.append(f"RSI-14 ({rsi:.1f}): Elevated momentum — watch for overbought exhaustion.")
 
         # Driver 3: Fund Alpha & Skill
         if alpha >= 2.0:
@@ -416,52 +430,64 @@ def compute_dynamic_forecast(
     eq_cagr = max(6.0, min(24.0, cagr_annual_pct)) / 100.0
     mu_eq_daily = ((1.0 + eq_cagr) ** (1.0 / 252.0)) - 1.0
 
-    # 2. Multi-horizon Momentum & Market Beta
-    win_short = values[-7:] if len(values) >= 7 else values
-    win_med = values[-21:] if len(values) >= 21 else values
+    # 2. Multi-horizon Momentum & Velocity via Regression
+    if len(values) >= 5:
+        w_len = min(14, len(values))
+        w_vals = np.array(values[-w_len:], dtype=float)
+        x_pts = np.arange(w_len)
+        slope_reg, _ = np.polyfit(x_pts, w_vals, 1)  # % per day
+        slope_5d = (w_vals[-1] - w_vals[max(0, w_len - 5)]) / max(1, min(4, w_len - 1))
+        recent_momentum = float(0.60 * slope_5d + 0.40 * slope_reg) / 100.0
+    else:
+        recent_momentum = float(values[-1] - values[0]) / max(1, len(values) - 1) / 100.0 if len(values) > 1 else 0.0
 
-    diff_short = (win_short[-1] - win_short[0]) / max(1, len(win_short) - 1) / 100.0 if len(win_short) > 1 else 0.0
-    diff_med = (win_med[-1] - win_med[0]) / max(1, len(win_med) - 1) / 100.0 if len(win_med) > 1 else 0.0
-
-    recent_momentum = 0.6 * diff_med + 0.4 * diff_short
     market_adj = (beta * (market_weekly_ret / 100.0) / 10.0) if market_weekly_ret else 0.0
     blended_initial_drift = recent_momentum + market_adj
 
-    # 3. ML Model Inference (74% Multi-Factor Gradient Boosting)
+    # 3. ML Model Inference (74% Multi-Factor Gradient Boosting with calibrated excess alpha)
     model, meta = load_production_ml_model()
-    signal = "ACCUMULATE"
-    conviction_score = 70.0
+    signal = "HOLD / NEUTRAL"
+    conviction_score = 55.0
     pred_21d_ret = None
     if model is not None and fund_df is not None:
         feat_df = extract_fund_features(fund_df)
         if feat_df is not None:
             try:
-                pred_21d_ret = float(model.predict(feat_df)[0])
+                raw_pred = float(model.predict(feat_df)[0])
+                baseline_drift = 0.023
+                excess_alpha = raw_pred - baseline_drift
+                r5 = float(feat_df['ret_5d'].iloc[0])
+                r10 = float(feat_df['ret_10d'].iloc[0])
+                r21 = float(feat_df['ret_21d'].iloc[0])
+                rsi = float(feat_df['rsi_14'].iloc[0])
+                mom_comp = 0.40 * r5 + 0.25 * r10 + 0.15 * r21
+                rsi_adj = (rsi - 50.0) / 100.0 * 0.01
+                pred_21d_ret = excess_alpha + mom_comp + rsi_adj
             except Exception:
                 pred_21d_ret = None
 
     if pred_21d_ret is not None:
         # Convert predicted 21d return into daily drift
-        ml_daily_drift = ((1.0 + max(-0.5, pred_21d_ret)) ** (1.0 / 21.0)) - 1.0
-        # Blend ML drift (70%) with observed momentum (30%)
-        blended_initial_drift = 0.70 * ml_daily_drift + 0.30 * blended_initial_drift
+        ml_daily_drift = pred_21d_ret / 21.0
+        # Blend ML drift (65%) with observed momentum (35%)
+        blended_initial_drift = 0.65 * ml_daily_drift + 0.35 * recent_momentum
 
-        if pred_21d_ret >= 0.035:
+        if pred_21d_ret >= 0.030 and recent_momentum > 0:
             signal = "STRONG BUY"
-            conviction_score = min(92.0, 75.0 + (pred_21d_ret - 0.035) * 200.0)
+            conviction_score = min(92.0, 75.0 + (pred_21d_ret - 0.030) * 200.0)
             trend_label, trend_icon = "AI Strong Bullish Momentum", "🚀"
-        elif pred_21d_ret >= 0.01:
+        elif pred_21d_ret >= 0.008:
             signal = "ACCUMULATE"
-            conviction_score = 68.0
+            conviction_score = min(78.0, 65.0 + pred_21d_ret * 150.0)
             trend_label, trend_icon = "AI Moderate Growth Trend", "📈"
-        elif pred_21d_ret >= -0.015:
+        elif pred_21d_ret >= -0.008:
             signal = "HOLD / NEUTRAL"
-            conviction_score = 58.0
+            conviction_score = 55.0
             trend_label, trend_icon = "AI Sideways / Stable", "⚖️"
         else:
             signal = "CAUTION / TRIM"
-            conviction_score = 65.0
-            trend_label, trend_icon = "AI Consolidation / Pullback", "🔻"
+            conviction_score = max(35.0, 65.0 + pred_21d_ret * 200.0)
+            trend_label, trend_icon = "AI Downside Pressure / Pullback", "🔻"
     else:
         # Fallback to momentum trend classification
         annualized_trend = (blended_initial_drift * 252.0) * 100.0
@@ -478,7 +504,7 @@ def compute_dynamic_forecast(
             conviction_score = 65.0
             trend_label, trend_icon = "Strong Bearish Trend", "🔻"
         elif annualized_trend < -3.0:
-            signal = "HOLD / NEUTRAL"
+            signal = "CAUTION / TRIM"
             conviction_score = 58.0
             trend_label, trend_icon = "Consolidation / Pullback", "📉"
         else:
@@ -497,9 +523,9 @@ def compute_dynamic_forecast(
     current_val = last_val
 
     for i in range(1, forecast_days + 1):
-        step_drift = mu_eq_daily + (phi ** i) * (blended_initial_drift - mu_eq_daily)
-        cycle = 0.25 * (sigma_daily * 100.0) * np.sin(2.0 * np.pi * i / 21.0)
-        current_val += (step_drift * 100.0) + (cycle * 0.15)
+        step_drift = (phi ** (i - 1)) * blended_initial_drift
+        cycle = 0.20 * (sigma_daily * 100.0) * np.sin(2.0 * np.pi * i / 21.0)
+        current_val += (step_drift * 100.0) + (cycle * 0.10)
         fut_vals.append(round(float(current_val), 2))
 
         # 95% Confidence Corridor (1.96 standard deviations)
