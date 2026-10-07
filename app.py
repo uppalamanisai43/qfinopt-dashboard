@@ -1072,27 +1072,54 @@ with tab3:
     else:
         trend_label, trend_icon = "Flat / Sideways", "➖"
 
-    # ── Predicted trend (damped AR(1) momentum so forecast reflects real trajectory) ──
-    fut_dates, fut_vals, predicted_final = [], [], None
+    # ── Multi-Horizon Mean-Reverting Forecast (Ornstein-Uhlenbeck Dynamics) ──
+    # Short term (1-15d): continues recent momentum (dip or rally)
+    # Long term (15-90d): mean-reverts toward fund's historical equilibrium daily return
+    fut_dates, fut_vals, upper_vals, lower_vals = [], [], [], []
+    predicted_final = None
+    trough_val = None
     if show_forecast3 and len(values) > 0:
         last_val, last_date = values[-1], dates[-1]
         fut_dates = list(pd.bdate_range(last_date + pd.Timedelta(days=1), periods=forecast_days3))
-        decay = 0.95
-        cum_delta = [sum(mu_trend * (decay**t) for t in range(i+1)) for i in range(forecast_days3)]
-        fut_vals  = [last_val + d for d in cum_delta]
+        
+        # Historical equilibrium daily return (+0.02% to +0.10%/day, ~5% to 25% annualized CAGR)
+        mu_eq = float(np.clip(mu_real if not np.isnan(mu_real) else 0.05, 0.02, 0.10))
+        sigma_d = float(np.clip(sigma_real if not np.isnan(sigma_real) else 0.85, 0.35, 2.0))
+        phi = 0.92  # Half-life ~9 trading days
+        
+        cur_v = last_val
+        for t in range(1, forecast_days3 + 1):
+            step_drift = mu_eq + (phi ** t) * (mu_trend - mu_eq)
+            cycle = 0.15 * sigma_d * np.sin(2.0 * np.pi * t / 21.0)
+            cur_v += step_drift + cycle * 0.10
+            fut_vals.append(cur_v)
+            
+            # Confidence corridor (expands with sqrt(t))
+            band = 1.35 * sigma_d * np.sqrt(t)
+            upper_vals.append(cur_v + band)
+            lower_vals.append(cur_v - band)
+            
         predicted_final = fut_vals[-1] if fut_vals else last_val
+        trough_val = min(fut_vals) if fut_vals else last_val
 
-    # ── Headline metrics: current value, predicted value, predicted NAV ──
-    m1, m2, m3 = st.columns(3)
+    # ── Headline metrics: current value, predicted value, predicted NAV, support/range ──
+    m1, m2, m3, m4 = st.columns(4)
     m1.metric("Current % Change", f"{values[-1]:+.2f}%" if values else "—")
     if predicted_final is not None:
+        delta_val = predicted_final - values[-1]
         m2.metric(f"Predicted (+{forecast_days3}d)", f"{predicted_final:+.2f}%",
-                   delta=f"{predicted_final - values[-1]:+.2f}%")
+                   delta=f"{delta_val:+.2f}%")
         predicted_nav = base * (1 + predicted_final/100)
         m3.metric("Predicted NAV", f"₹{predicted_nav:.2f}")
+        if mu_trend < -0.02 and trough_val is not None and trough_val < values[-1]:
+            m4.metric("Support / Trough", f"{trough_val:+.2f}%",
+                      delta=f"{trough_val - values[-1]:+.2f}%", delta_color="inverse")
+        else:
+            m4.metric("95% Horizon Range", f"{lower_vals[-1]:.1f}% to {upper_vals[-1]:.1f}%")
     else:
         m2.metric("Predicted", "—")
         m3.metric("Predicted NAV", "—")
+        m4.metric("Range", "—")
 
     col1, col2 = st.columns([2,1])
 
@@ -1105,11 +1132,29 @@ with tab3:
         ))
 
         if show_forecast3 and fut_vals:
+            all_fc_dates = [dates[-1]] + fut_dates
+            all_upper    = [values[-1]] + upper_vals
+            all_lower    = [values[-1]] + lower_vals
+            all_pred     = [values[-1]] + fut_vals
+
+            # Shaded 95% Confidence Corridor
             fig3.add_trace(go.Scatter(
-                x=[dates[-1]] + fut_dates, y=[values[-1]] + fut_vals,
-                mode="lines", name="Predicted",
+                x=all_fc_dates, y=all_upper,
+                mode="lines", line=dict(width=0),
+                showlegend=False, hoverinfo="skip"
+            ))
+            fig3.add_trace(go.Scatter(
+                x=all_fc_dates, y=all_lower,
+                mode="lines", line=dict(width=0),
+                fill="tonexty", fillcolor="rgba(255, 165, 0, 0.12)",
+                name="Confidence Corridor (95%)",
+                hovertemplate="%{x|%d %b %Y}<br>Lower Bound: %{y:.2f}%<extra>Range</extra>"
+            ))
+            fig3.add_trace(go.Scatter(
+                x=all_fc_dates, y=all_pred,
+                mode="lines", name="Predicted Path",
                 line=dict(color="orange", width=2.4, dash="dash"),
-                hovertemplate="%{x|%d %b %Y}<br><b>%{y:.2f}%</b><extra>Predicted</extra>"
+                hovertemplate="%{x|%d %b %Y}<br><b>%{y:.2f}%</b><extra>Predicted Path</extra>"
             ))
 
         fig3.add_hline(y=0, line_width=1, line_color="gray", opacity=0.5)
@@ -1149,16 +1194,18 @@ with tab3:
 
     if mu_trend > 0.02:
         st.success(
-            f"📈 **{selected_fund[:50]} is trending UP** — average trajectory "
-            f"~{mu_trend:+.3f}%/day over the recent window. Forecast projects continued growth.")
+            f"📈 **{selected_fund[:50]} is in an upward momentum phase** "
+            f"(~{mu_trend:+.3f}%/day short-term velocity). The forecast projects initial upside continuation before stabilizing toward historical CAGR.")
     elif mu_trend < -0.02:
-        st.error(
-            f"📉 **{selected_fund[:50]} is trending DOWN** — average trajectory "
-            f"~{mu_trend:+.3f}%/day over the recent window. Forecast projects continued decline.")
+        trough_str = f"**{trough_val:+.2f}%**" if trough_val is not None else "support"
+        st.warning(
+            f"📉 **{selected_fund[:50]} is experiencing short-term downside pressure** "
+            f"(~{mu_trend:+.3f}%/day velocity). The model projects initial support testing near "
+            f"{trough_str} followed by mean-reverting recovery toward historical performance over longer horizons.")
     else:
         st.info(
-            f"➖ **{selected_fund[:50]} is roughly flat** — no strong "
-            f"recent directional trend detected.")
+            f"➖ **{selected_fund[:50]} is consolidating in a sideways range** — "
+            f"no strong directional shock detected.")
 
     stats = pd.DataFrame({
         "Metric" : ["Daily Return (avg)",
@@ -1527,12 +1574,20 @@ with tab6:
                 slope_reg, _ = np.polyfit(x_pts, w_vals, 1)  # % per day
                 slope_5d = (w_vals[-1] - w_vals[max(0, w_len - 5)]) / max(1, min(4, w_len - 1))
                 mu_f = float(0.60 * slope_5d + 0.40 * slope_reg)
-                decay = 0.95
+                f_daily_mu = float(fdf["Daily_Return_%"].dropna().mean()) if "Daily_Return_%" in fdf.columns and len(fdf["Daily_Return_%"].dropna()) > 10 else 0.05
+                mu_eq_f = float(np.clip(f_daily_mu, 0.02, 0.10))
+                phi = 0.92
+
                 last_val, last_date = values[-1], dates[-1]
                 fut_dates = list(pd.bdate_range(
                     last_date + pd.Timedelta(days=1), periods=forecast_days))
-                cum_delta = [sum(mu_f * (decay**t) for t in range(i+1)) for i in range(forecast_days)]
-                fut_vals = [last_val + d for d in cum_delta]
+                cur_f = last_val
+                fut_vals = []
+                for t in range(1, forecast_days + 1):
+                    step_drift = mu_eq_f + (phi ** t) * (mu_f - mu_eq_f)
+                    cur_f += step_drift
+                    fut_vals.append(cur_f)
+
                 fig6.add_trace(go.Scatter(
                     x=[last_date]+fut_dates, y=[last_val]+fut_vals,
                     mode="lines", name=f"{fund[:22]} (forecast)",

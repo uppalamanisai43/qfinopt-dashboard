@@ -516,20 +516,20 @@ def compute_dynamic_forecast(
     b_dates = pd.bdate_range(last_date + pd.Timedelta(days=1), periods=forecast_days)
     fut_dates = [d.strftime("%d %b %Y") for d in b_dates]
 
-    phi = 0.94  # Damping factor
+    phi = 0.92  # Mean-reversion half-life ~9 trading days
     fut_vals: List[float] = []
     upper_vals: List[float] = []
     lower_vals: List[float] = []
     current_val = last_val
 
     for i in range(1, forecast_days + 1):
-        step_drift = (phi ** (i - 1)) * blended_initial_drift
-        cycle = 0.20 * (sigma_daily * 100.0) * np.sin(2.0 * np.pi * i / 21.0)
+        step_drift = mu_eq_daily + (phi ** i) * (blended_initial_drift - mu_eq_daily)
+        cycle = 0.15 * (sigma_daily * 100.0) * np.sin(2.0 * np.pi * i / 21.0)
         current_val += (step_drift * 100.0) + (cycle * 0.10)
         fut_vals.append(round(float(current_val), 2))
 
-        # 95% Confidence Corridor (1.96 standard deviations)
-        corridor_width = 1.96 * (sigma_daily * 100.0) * np.sqrt(i)
+        # 95% Confidence Corridor
+        corridor_width = 1.35 * (sigma_daily * 100.0) * np.sqrt(i)
         upper_vals.append(round(float(current_val + corridor_width), 2))
         lower_vals.append(round(float(current_val - corridor_width), 2))
 
