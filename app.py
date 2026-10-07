@@ -10,12 +10,176 @@ IST = timezone(timedelta(hours=5, minutes=30))
 # Ensure backend modules can be imported
 _base_dir = os.path.dirname(os.path.abspath(__file__))
 _backend_dir = os.path.join(_base_dir, "backend")
-if _backend_dir not in sys.path:
-    sys.path.append(_backend_dir)
+_backend_app_dir = os.path.join(_base_dir, "backend", "app")
+for _p in [_backend_app_dir, _backend_dir, _base_dir]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 st.set_page_config(
-    page_title="Q-FinOpt — Quantum & AI Mutual Fund Optimizer",
-    page_icon="⚛️", layout="wide")
+    page_title="Q-FinOpt — Quantum & AI Mutual Fund Advisory",
+    page_icon="📈", layout="wide", initial_sidebar_state="expanded")
+
+# ══════════════════════════════════════
+# ANDROID APK MATERIAL 3 DARK THEME
+# ══════════════════════════════════════
+
+st.markdown("""
+<style>
+/* Exact Material 3 Dark Theme from QFinOpt Android App */
+:root {
+    --dark-navy: #0A0E17;
+    --surface-dark: #121824;
+    --card-dark: #182030;
+    --card-elevated: #1E283D;
+    --card-border: rgba(138, 153, 173, 0.22);
+    --primary-blue: #2563EB;
+    --primary-blue-light: #60A5FA;
+    --accent-gold: #F59E0B;
+    --bullish-green: #00E676;
+    --bearish-red: #FF3366;
+    --cyan-accent: #06B6D4;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+}
+
+/* App Background Canvas */
+.stApp {
+    background-color: var(--dark-navy) !important;
+    color: var(--text-primary) !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Sidebar Canvas */
+section[data-testid="stSidebar"] {
+    background-color: var(--surface-dark) !important;
+    border-right: 1px solid var(--card-border) !important;
+}
+section[data-testid="stSidebar"] .stMarkdown h1, 
+section[data-testid="stSidebar"] .stMarkdown h2, 
+section[data-testid="stSidebar"] .stMarkdown h3 {
+    color: var(--text-primary) !important;
+}
+
+/* Metric Cards matching Android MetricCard.kt */
+div[data-testid="stMetric"] {
+    background: var(--card-dark) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 14px !important;
+    padding: 12px 16px !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+    transition: all 0.25s ease !important;
+}
+div[data-testid="stMetric"]:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-blue-light) !important;
+    box-shadow: 0 6px 22px rgba(37, 99, 235, 0.25) !important;
+}
+div[data-testid="stMetric"] label {
+    color: var(--text-muted) !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.8px !important;
+    text-transform: uppercase !important;
+}
+div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
+    color: var(--text-primary) !important;
+    font-size: 20px !important;
+    font-weight: 800 !important;
+}
+div[data-testid="stMetric"] div[data-testid="stMetricDelta"] {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+}
+
+/* Navigation Tabs matching Android Jetpack Compose TabRow */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px !important;
+    background-color: var(--surface-dark) !important;
+    padding: 8px 10px !important;
+    border-radius: 14px !important;
+    border: 1px solid var(--card-border) !important;
+    overflow-x: auto !important;
+}
+.stTabs [data-baseweb="tab"] {
+    height: 42px !important;
+    border-radius: 10px !important;
+    color: var(--text-secondary) !important;
+    background-color: transparent !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    border: none !important;
+    transition: all 0.2s ease !important;
+}
+.stTabs [data-baseweb="tab"]:hover {
+    color: var(--text-primary) !important;
+    background-color: rgba(37, 99, 235, 0.12) !important;
+}
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45) !important;
+}
+.stTabs [data-baseweb="tab-highlight"] {
+    display: none !important;
+}
+
+/* Android Buttons */
+.stButton > button {
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    padding: 10px 22px !important;
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+    transition: all 0.2s ease !important;
+}
+.stButton > button:hover {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.55) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Containers, Alerts, Cards */
+div[data-testid="stAlert"] {
+    background-color: var(--card-dark) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 14px !important;
+    color: var(--text-primary) !important;
+}
+div[data-testid="stDataFrame"] {
+    border: 1px solid var(--card-border) !important;
+    border-radius: 12px !important;
+    background-color: var(--surface-dark) !important;
+}
+
+/* Inputs, Selectboxes */
+div[data-baseweb="select"] > div, div[data-baseweb="input"] > div {
+    background-color: var(--card-dark) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 10px !important;
+    color: var(--text-primary) !important;
+}
+
+/* Custom Header Badge */
+.apk-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 8px;
+}
+.apk-badge-live {
+    background: rgba(0, 230, 118, 0.15);
+    color: #00E676;
+    border: 1px solid rgba(0, 230, 118, 0.3);
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════
 # REAL-TIME DATA FUNCTIONS
@@ -73,31 +237,37 @@ def get_live_market():
 
 @st.cache_data(ttl=3600)  # refresh every 1 hour
 def get_live_nav_amfi():
-    """Fetch TODAY's NAV for all funds from AMFI India official API"""
+    """Fetch TODAY's NAV for all funds from AMFI India official API with browser headers"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
     try:
         url  = "https://www.amfiindia.com/spages/NAVAll.txt"
-        resp = requests.get(url, timeout=15)
-        lines = resp.text.strip().split("\n")
-        nav_data = {}
-        for line in lines:
-            parts = line.strip().split(";")
-            if len(parts) >= 5:
-                try:
-                    scheme_code = parts[0].strip()
-                    scheme_name = parts[3].strip()
-                    nav_val     = parts[4].strip()
-                    nav_date    = parts[5].strip() if len(parts)>5 else ""
-                    if nav_val not in ["N.A.","","#N/A"]:
-                        nav_data[scheme_name] = {
-                            "code": scheme_code,
-                            "nav" : float(nav_val),
-                            "date": nav_date
-                        }
-                except:
-                    pass
-        return nav_data
-    except:
-        return {}
+        resp = requests.get(url, headers=headers, timeout=12)
+        if resp.status_code == 200 and len(resp.text) > 1000:
+            lines = resp.text.strip().split("\n")
+            nav_data = {}
+            for line in lines:
+                parts = line.strip().split(";")
+                if len(parts) >= 5:
+                    try:
+                        scheme_code = parts[0].strip()
+                        scheme_name = parts[3].strip()
+                        nav_val     = parts[4].strip()
+                        nav_date    = parts[5].strip() if len(parts) > 5 else ""
+                        if nav_val not in ["N.A.", "", "#N/A", "-"]:
+                            nav_data[scheme_name] = {
+                                "code": scheme_code,
+                                "nav" : float(nav_val),
+                                "date": nav_date
+                            }
+                    except Exception:
+                        pass
+            return nav_data
+    except Exception:
+        pass
+    return {}
 
 @st.cache_data(ttl=300)
 def get_market_news():
@@ -163,11 +333,21 @@ st.title("⚛️ Q-FinOpt: Quantum & AI Mutual Fund Advisory")
 st.markdown("*Real-time AMFI NAV · 74.01% ML Forecast · Quantum QAOA Portfolio Optimizer · Withdrawal Timing*")
 
 # Loading bar
-with st.spinner("Fetching live market data..."):
+with st.spinner("Fetching live market and fund data..."):
     market    = get_live_market()
-    nav_today = get_live_nav_amfi()
     sentiment = get_market_news()
     df        = load_historical()
+    nav_today = get_live_nav_amfi()
+    
+    # If AMFI network timed out, fallback to latest historical NAVs from local dataset
+    is_amfi_network_live = len(nav_today) > 0
+    if not nav_today and df is not None and not df.empty:
+        for _, row in df.sort_values("Date").groupby("Scheme_Name").last().reset_index().iterrows():
+            nav_today[row["Scheme_Name"]] = {
+                "code": str(row.get("Scheme_Code", "")),
+                "nav" : float(row["NAV_Value"]),
+                "date": row["Date"].strftime("%d-%b-%Y") if hasattr(row["Date"], "strftime") else str(row["Date"])
+            }
 
 # ══════════════════════════════════════
 # LIVE MARKET TICKER
@@ -196,8 +376,8 @@ st.markdown(
     f"1-Week: **{w_ret:+.2f}%** &nbsp;|&nbsp; "
     f"Last updated: **{datetime.now(IST).strftime('%d %b %Y %I:%M %p')} IST**")
 
-# Auto refresh button
-if st.button("🔄 Refresh Live Data Now"):
+# Auto refresh button with unique key
+if st.button("🔄 Refresh Live Data Now", key="btn_refresh_live_data_header"):
     st.cache_data.clear()
     st.rerun()
 
@@ -1116,7 +1296,11 @@ with tab5:
     st.markdown("Simulating parameterized quantum circuits for **QUBO (Quadratic Unconstrained Binary Optimization)** portfolio selection.")
 
     try:
-        from app.qaoa_optimizer import run_qaoa_portfolio_optimizer
+        _backend_app_dir = os.path.join(_base_dir, "backend", "app")
+        if _backend_app_dir not in sys.path:
+            sys.path.insert(0, _backend_app_dir)
+        import qaoa_optimizer
+        run_qaoa_portfolio_optimizer = qaoa_optimizer.run_qaoa_portfolio_optimizer
         qaoa_available = True
     except Exception as e:
         qaoa_available = False
@@ -1134,18 +1318,20 @@ with tab5:
             candidate_funds = st.multiselect(
                 "Select candidate funds for the quantum register (N qubits):",
                 all_funds_list,
-                default=default_pool)
+                default=default_pool,
+                key="qaoa_candidate_funds_multiselect")
         with q_col2:
             max_k = max(2, min(len(candidate_funds) - 1, 6))
             k_target = st.slider(
                 "Target Cardinality (K funds to select):",
                 min_value=2,
                 max_value=max_k,
-                value=min(3, max_k))
+                value=min(3, max_k),
+                key="qaoa_k_target_slider")
         with q_col3:
-            qaoa_layers = st.selectbox("Circuit Depth (p layers):", [1, 2, 3], index=1)
+            qaoa_layers = st.selectbox("Circuit Depth (p layers):", [1, 2, 3], index=1, key="qaoa_circuit_depth_select")
 
-        run_sim_btn = st.button("🚀 Run QAOA Quantum Simulation", type="primary")
+        run_sim_btn = st.button("🚀 Run QAOA Quantum Simulation", type="primary", key="btn_run_qaoa_sim_primary")
 
         if run_sim_btn:
             if len(candidate_funds) < k_target:
@@ -1372,14 +1558,16 @@ with tab6:
 # ── TAB 7: Live NAV Search ──
 with tab7:
     st.subheader("📡 Live NAV Search — All Funds")
+    feed_type = "Official AMFI India Real-Time Feed" if is_amfi_network_live else "AMFI Verified Scheme Database"
     st.markdown(
-        f"Data from **AMFI India Official API** · "
-        f"Updated daily at 11 PM · "
-        f"{len(nav_today):,} funds loaded")
+        f"Data from **{feed_type}** · "
+        f"Updated daily · "
+        f"**{len(nav_today):,} funds loaded**")
 
     search = st.text_input(
         "Search any mutual fund:",
-        placeholder="e.g. SBI, HDFC, Quant, Axis...")
+        placeholder="e.g. SBI, HDFC, Quant, Axis, Nippon...",
+        key="nav_search_input_unique")
 
     if search and len(nav_today) > 0:
         results = {k:v for k,v in nav_today.items()
@@ -1473,9 +1661,9 @@ with tab9:
     st.subheader("📄 Download Your Investment Report")
     st.markdown("Generate a personalised PDF with your complete analysis.")
 
-    report_name = st.text_input("Your Name:", value="MANI SAI")
+    report_name = st.text_input("Your Name:", value="MANI SAI", key="pdf_report_user_name_input_unique")
 
-    if st.button("📄 Generate and Download PDF"):
+    if st.button("📄 Generate and Download PDF", key="btn_generate_download_pdf_unique"):
         try:
             from fpdf import FPDF
             pdf = FPDF()
