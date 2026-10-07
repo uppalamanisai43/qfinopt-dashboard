@@ -11,3 +11,5 @@ openpyxl
 gdown
 fpdf2
 plotly
+joblib
+requests

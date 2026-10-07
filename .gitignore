@@ -13,10 +13,10 @@ env/
 ENV/
 .env
 
-# ML Model & Large Data Files (too large for GitHub)
+# ML Model & Large Data Files (uncompressed 91MB CSV ignored, 14MB compressed .gz allowed)
 backend/data/qfinopt_cleaned.csv
-backend/data/mf_gb_model.joblib
-backend/data/*.joblib
+!backend/data/qfinopt_cleaned.csv.gz
+!backend/data/mf_gb_model.joblib
 backend/data/*.pkl
 backend/data/users.json
 backend/data/portfolios.json

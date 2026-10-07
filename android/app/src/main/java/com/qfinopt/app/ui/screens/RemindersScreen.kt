@@ -613,9 +613,11 @@ fun RemindersScreen(viewModel: MainViewModel) {
                                 coroutineScope.launch {
                                     isGeneratingPdf = true
                                     try {
+                                        val targetFund = selectedFund.ifBlank { "AXIS Bluechip Fund" }
+                                        val targetUser = investorName.ifBlank { "MANI SAI" }
                                         val req = PdfReportRequest(
-                                            fundName = selectedFund,
-                                            userName = investorName,
+                                            fundName = targetFund,
+                                            userName = targetUser,
                                             investment = investmentAmount,
                                             investDate = investDate,
                                             sipAmount = sipAmount,
@@ -644,9 +646,20 @@ fun RemindersScreen(viewModel: MainViewModel) {
                                                 setDataAndType(uri, "application/pdf")
                                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                             }
-                                            context.startActivity(Intent.createChooser(viewIntent, "Open Investment Report"))
+                                            try {
+                                                context.startActivity(Intent.createChooser(viewIntent, "Open Investment Report"))
+                                            } catch (e: Exception) {
+                                                // Fallback to share sheet if no PDF viewer app is installed
+                                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                                    type = "application/pdf"
+                                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                }
+                                                context.startActivity(Intent.createChooser(shareIntent, "Share / Save Investment Report"))
+                                            }
                                         } else {
-                                            Toast.makeText(context, "Failed to generate PDF: ${resp.message()}", Toast.LENGTH_LONG).show()
+                                            val errMsg = resp.errorBody()?.string() ?: resp.message()
+                                            Toast.makeText(context, "Failed to generate PDF: $errMsg", Toast.LENGTH_LONG).show()
                                         }
                                     } catch (e: Exception) {
                                         Toast.makeText(context, "PDF Error: ${e.message}", Toast.LENGTH_LONG).show()
@@ -669,6 +682,30 @@ fun RemindersScreen(viewModel: MainViewModel) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("Generate & Open PDF Report", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                             }
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                val baseUrl = ApiClient.getBaseUrl().trimEnd('/')
+                                val targetFund = selectedFund.ifBlank { "AXIS Bluechip Fund" }
+                                val targetUser = investorName.ifBlank { "MANI SAI" }
+                                val encodedFund = URLEncoder.encode(targetFund, "UTF-8")
+                                val encodedUser = URLEncoder.encode(targetUser, "UTF-8")
+                                val downloadUrl = "$baseUrl/api/report/pdf?fund_name=$encodedFund&user_name=$encodedUser&investment=$investmentAmount&invest_date=$investDate&sip_amount=$sipAmount&sip_years=$sipYears"
+                                try {
+                                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl))
+                                    context.startActivity(browserIntent)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Could not open browser: ${e.message}", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, AccentGold.copy(alpha = 0.8f))
+                        ) {
+                            Icon(Icons.Default.Download, contentDescription = null, tint = AccentGold)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Download via Browser / Direct Link", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = AccentGold)
                         }
                     }
                 }

@@ -122,6 +122,18 @@ def _get_report_pdf_path() -> Optional[str]:
             return p
     return None
 
+def _get_architecture_img_path() -> Optional[str]:
+    candidate_paths = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "architecture_diagram.png")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "architecture_diagram.png")),
+        os.path.abspath(os.path.join(os.getcwd(), "architecture_diagram.png")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "paper_figures", "Fig1_System_Architecture.png")),
+    ]
+    for p in candidate_paths:
+        if os.path.exists(p) and os.path.getsize(p) > 0:
+            return p
+    return None
+
 @app.get("/", response_class=HTMLResponse)
 def home_download_page():
     """Interactive download page for the Q-FinOpt Android mobile app."""
@@ -290,6 +302,22 @@ def download_project_report_pdf():
             headers={"Content-Disposition": "attachment; filename=Q_FinOpt_Project_Report.pdf"}
         )
     raise HTTPException(status_code=404, detail="Project report PDF not found")
+
+@app.get("/download/architecture")
+@app.get("/download/architecture-diagram")
+@app.get("/architecture.png")
+@app.get("/architecture_diagram.png")
+def download_architecture_diagram():
+    """Download the high-resolution publication-quality Q-FinOpt architecture diagram image."""
+    img_path = _get_architecture_img_path()
+    if img_path and os.path.exists(img_path):
+        return FileResponse(
+            img_path,
+            media_type="image/png",
+            filename="architecture_diagram.png",
+            headers={"Content-Disposition": "attachment; filename=architecture_diagram.png"}
+        )
+    raise HTTPException(status_code=404, detail="Architecture diagram image not found")
 
 @app.get("/health")
 def health_check():
@@ -479,6 +507,27 @@ def download_pdf_report(req: PdfReportRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/report/pdf")
+@app.get("/report/pdf")
+def get_pdf_report_via_browser(
+    fund_name: str = "AXIS Bluechip Fund",
+    user_name: str = "Investor",
+    investment: float = 100000.0,
+    invest_date: str = "2024-01-01",
+    sip_amount: float = 5000.0,
+    sip_years: int = 5
+):
+    """Generate and directly download investment PDF report via browser GET request."""
+    req = PdfReportRequest(
+        fund_name=fund_name,
+        user_name=user_name,
+        investment=investment,
+        invest_date=invest_date,
+        sip_amount=sip_amount,
+        sip_years=sip_years
+    )
+    return download_pdf_report(req)
 
 @app.get("/download/apk")
 def download_apk():

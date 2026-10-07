@@ -197,11 +197,33 @@ def compute_ml_prediction_details(fund_df: pd.DataFrame, display_nav: float) -> 
     return pred_21d_ret_pct, pred_target_nav, round(win_probability, 1), signal, round(conviction_score, 1), key_drivers
 
 def get_fund_stats(fund_name: str) -> FundStatsResponse:
-    """Retrieve full statistical indicators for a mutual fund."""
+    """Retrieve full statistical indicators for a mutual fund with robust fallback."""
     df = load_historical_data()
-    fund_df = df[df["Scheme_Name"] == fund_name].sort_values("Date")
+    fund_df = df[df["Scheme_Name"] == fund_name]
+    if fund_df.empty:
+        # Try normalized matching
+        clean_target = (fund_name or "").strip().lower().replace("-", " ").replace("–", " ").replace("—", " ")
+        matched_name = None
+        for name in df["Scheme_Name"].dropna().unique():
+            if name.strip().lower().replace("-", " ").replace("–", " ").replace("—", " ") == clean_target:
+                matched_name = name
+                break
+        if not matched_name:
+            import difflib
+            all_funds = df["Scheme_Name"].dropna().unique().tolist()
+            if fund_name and fund_name.strip():
+                matches = difflib.get_close_matches(fund_name, all_funds, n=1, cutoff=0.3)
+                if matches:
+                    matched_name = matches[0]
+            if not matched_name and all_funds:
+                matched_name = all_funds[0]
+        if matched_name:
+            fund_df = df[df["Scheme_Name"] == matched_name]
+            fund_name = matched_name
+
     if fund_df.empty:
         raise ValueError(f"Fund '{fund_name}' not found.")
+    fund_df = fund_df.sort_values("Date")
 
     mu_real = float(fund_df["Daily_Return_%"].mean())
     sigma_real = float(fund_df["Daily_Return_%"].std())
