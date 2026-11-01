@@ -38,6 +38,8 @@ android/app/build/
 android/build/
 android/local.properties
 *.apk
+!backend/QFinOpt.apk
+!QFinOpt.apk
 *.aab
 *.keystore
 *.jks
