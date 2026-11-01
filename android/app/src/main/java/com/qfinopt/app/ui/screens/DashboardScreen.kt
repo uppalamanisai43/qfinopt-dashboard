@@ -368,10 +368,11 @@ fun DashboardScreen(
                         }
 
                         // AI Signal Badge
-                        val (sigText, sigColor) = when {
-                            stats.sharpeVal >= 1.5 || stats.ret1y >= 25.0 -> "ACCUMULATE" to BullishGreen
-                            stats.sharpeVal >= 0.8 -> "HOLD" to AccentGold
-                            else -> "REDUCE" to BearishRed
+                        val sigText = stats.signal ?: "ACCUMULATE"
+                        val sigColor = when {
+                            sigText.contains("BUY") || sigText.contains("ACCUMULATE") -> BullishGreen
+                            sigText.contains("CAUTION") || sigText.contains("TRIM") -> BearishRed
+                            else -> AccentGold
                         }
                         Surface(
                             color = sigColor.copy(alpha = 0.15f),
@@ -422,23 +423,21 @@ fun DashboardScreen(
                             }
                         }
 
-                        // Synthetic Sparkline curve based on 1Y trajectory
-                        val baseNav = stats.displayNav / (1.0 + stats.ret1y / 100.0)
-                        val sparkPoints = listOf(
-                            baseNav,
-                            baseNav * (1.0 + (stats.ret1y * 0.2) / 100.0),
-                            baseNav * (1.0 + (stats.ret1y * 0.45) / 100.0),
-                            baseNav * (1.0 + (stats.ret1y * 0.7) / 100.0),
-                            stats.displayNav
-                        )
+                        // Real Sparkline from actual recent NAV history
+                        val sparkPoints = if (!stats.sparklineNavs.isNullOrEmpty()) {
+                            stats.sparklineNavs
+                        } else {
+                            val baseNav = stats.displayNav / (1.0 + stats.ret1y / 100.0)
+                            listOf(baseNav, stats.displayNav)
+                        }
                         MiniSparkline(points = sparkPoints, isPositive = stats.ret1y >= 0)
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // 52-Week Range Bar
-                    val lowNav = stats.displayNav * 0.82
-                    val highNav = stats.displayNav * 1.18
+                    // 52-Week Range Bar from real NAV data
+                    val lowNav = stats.low52w ?: (stats.displayNav * 0.85)
+                    val highNav = stats.high52w ?: (stats.displayNav * 1.15)
                     NavRangeBar(currentNav = stats.displayNav, lowNav = lowNav, highNav = highNav)
                 }
             }
@@ -525,6 +524,12 @@ fun DashboardScreen(
                 signal = stats.signal,
                 convictionScore = stats.convictionScore,
                 keyDrivers = stats.keyDrivers,
+                pred7dRetPct = stats.pred7dRetPct,
+                pred7dTargetNav = stats.pred7dTargetNav,
+                pred30dRetPct = stats.pred30dRetPct,
+                pred30dTargetNav = stats.pred30dTargetNav,
+                bearTargetNav = stats.bearTargetNav,
+                bullTargetNav = stats.bullTargetNav,
                 onNavigateToAnalysis = onNavigateToAnalysis
             )
         }

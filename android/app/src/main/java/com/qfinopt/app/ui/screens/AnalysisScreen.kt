@@ -154,7 +154,13 @@ fun AnalysisScreen(viewModel: MainViewModel) {
                 winProbability = h.winProbability,
                 signal = h.signal,
                 convictionScore = h.convictionScore,
-                keyDrivers = h.keyDrivers
+                keyDrivers = h.keyDrivers,
+                pred7dRetPct = h.pred7dRetPct,
+                pred7dTargetNav = h.pred7dTargetNav,
+                pred30dRetPct = h.pred30dRetPct,
+                pred30dTargetNav = h.pred30dTargetNav,
+                bearTargetNav = h.bearTargetNav,
+                bullTargetNav = h.bullTargetNav
             )
 
             // Trend Banner
@@ -304,7 +310,8 @@ fun AnalysisScreen(viewModel: MainViewModel) {
                 border = BorderStroke(1.dp, CardBorder)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    h.stats.forEachIndexed { index, statMap ->
+                    val statsList = h.stats ?: emptyList()
+                    statsList.forEachIndexed { index, statMap ->
                         val metric = statMap["metric"] ?: ""
                         val value = statMap["value"] ?: ""
                         Row(
@@ -316,7 +323,7 @@ fun AnalysisScreen(viewModel: MainViewModel) {
                             Text(metric, fontSize = 12.sp, color = TextSecondary)
                             Text(value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                         }
-                        if (index < h.stats.size - 1) {
+                        if (index < statsList.size - 1) {
                             Divider(color = CardBorder.copy(alpha = 0.5f), thickness = 0.5.dp)
                         }
                     }

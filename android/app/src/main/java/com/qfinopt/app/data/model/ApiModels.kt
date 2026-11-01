@@ -45,6 +45,15 @@ data class FundStatsResponse(
     @SerializedName("conviction_score") val convictionScore: Double? = null,
     @SerializedName("pred_21d_ret_pct") val pred21dRetPct: Double? = null,
     @SerializedName("pred_target_nav") val predTargetNav: Double? = null,
+    @SerializedName("pred_7d_ret_pct") val pred7dRetPct: Double? = null,
+    @SerializedName("pred_7d_target_nav") val pred7dTargetNav: Double? = null,
+    @SerializedName("pred_30d_ret_pct") val pred30dRetPct: Double? = null,
+    @SerializedName("pred_30d_target_nav") val pred30dTargetNav: Double? = null,
+    @SerializedName("bear_target_nav") val bearTargetNav: Double? = null,
+    @SerializedName("bull_target_nav") val bullTargetNav: Double? = null,
+    @SerializedName("high_52w") val high52w: Double? = null,
+    @SerializedName("low_52w") val low52w: Double? = null,
+    @SerializedName("sparkline_navs") val sparklineNavs: List<Double>? = null,
     @SerializedName("win_probability") val winProbability: Double? = null,
     @SerializedName("key_drivers") val keyDrivers: List<String>? = null
 )
@@ -152,13 +161,21 @@ data class FundHistoryResponse(
     @SerializedName("conviction_score") val convictionScore: Double? = null,
     @SerializedName("pred_21d_ret_pct") val pred21dRetPct: Double? = null,
     @SerializedName("pred_target_nav") val predTargetNav: Double? = null,
+    @SerializedName("pred_7d_ret_pct") val pred7dRetPct: Double? = null,
+    @SerializedName("pred_7d_target_nav") val pred7dTargetNav: Double? = null,
+    @SerializedName("pred_30d_ret_pct") val pred30dRetPct: Double? = null,
+    @SerializedName("pred_30d_target_nav") val pred30dTargetNav: Double? = null,
+    @SerializedName("bear_target_nav") val bearTargetNav: Double? = null,
+    @SerializedName("bull_target_nav") val bullTargetNav: Double? = null,
+    @SerializedName("high_52w") val high52w: Double? = null,
+    @SerializedName("low_52w") val low52w: Double? = null,
     @SerializedName("win_probability") val winProbability: Double? = null,
     @SerializedName("key_drivers") val keyDrivers: List<String>? = null,
     @SerializedName("sortino") val sortino: Double? = null,
     @SerializedName("mdd") val mdd: Double? = null,
-    @SerializedName("hist_return_bins") val histReturnBins: List<Double>,
-    @SerializedName("hist_return_counts") val histReturnCounts: List<Int>,
-    @SerializedName("stats") val stats: List<Map<String, String>>
+    @SerializedName("hist_return_bins") val histReturnBins: List<Double>? = null,
+    @SerializedName("hist_return_counts") val histReturnCounts: List<Int>? = null,
+    @SerializedName("stats") val stats: List<Map<String, String>>? = null
 )
 
 data class CompareRequest(

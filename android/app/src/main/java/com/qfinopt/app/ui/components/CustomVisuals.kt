@@ -318,6 +318,12 @@ fun RealAiPredictionCard(
     convictionScore: Double?,
     keyDrivers: List<String>?,
     modifier: Modifier = Modifier,
+    pred7dRetPct: Double? = null,
+    pred7dTargetNav: Double? = null,
+    pred30dRetPct: Double? = null,
+    pred30dTargetNav: Double? = null,
+    bearTargetNav: Double? = null,
+    bullTargetNav: Double? = null,
     onNavigateToAnalysis: (() -> Unit)? = null
 ) {
     if (pred21dRetPct == null && signal == null) return
@@ -370,7 +376,7 @@ fun RealAiPredictionCard(
                             letterSpacing = 0.8.sp
                         )
                         Text(
-                            text = "21-Day Forward Horizon (~1 Month)",
+                            text = "Quantitative Multi-Horizon Forecast",
                             fontSize = 10.sp,
                             color = TextMuted
                         )
@@ -392,7 +398,7 @@ fun RealAiPredictionCard(
                 }
             }
 
-            // Target Values Grid: Target NAV & Expected Return
+            // Target Values Grid: Primary 1-Month Target NAV & Expected Return
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -402,7 +408,7 @@ fun RealAiPredictionCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("PROJECTED TARGET NAV", fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Bold)
+                    Text("1-MONTH TARGET NAV (21D)", fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Bold)
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             text = "₹${String.format("%.2f", targetNav)}",
@@ -426,7 +432,7 @@ fun RealAiPredictionCard(
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("EXPECTED GAIN", fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Bold)
+                    Text("EXPECTED RETURN", fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Bold)
                     Surface(
                         color = if (isPositive) BullishGreen.copy(alpha = 0.15f) else BearishRed.copy(alpha = 0.15f),
                         shape = RoundedCornerShape(8.dp)
@@ -444,6 +450,125 @@ fun RealAiPredictionCard(
                             text = "Conviction: ${String.format("%.0f", convictionScore)}%",
                             fontSize = 10.sp,
                             color = TextSecondary
+                        )
+                    }
+                }
+            }
+
+            // Multi-Horizon Mini Cards (7-Day, 21-Day, 30-Day)
+            val t7Nav = pred7dTargetNav ?: (currentNav * (1.0 + (pred7dRetPct ?: (retPct * 0.33)) / 100.0))
+            val t7Pct = pred7dRetPct ?: (retPct * 0.33)
+            val t30Nav = pred30dTargetNav ?: (currentNav * (1.0 + (pred30dRetPct ?: (retPct * 1.35)) / 100.0))
+            val t30Pct = pred30dRetPct ?: (retPct * 1.35)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // 7-Day Card
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    color = SurfaceDark,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(0.5.dp, CardBorder)
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text("7-DAY TARGET", fontSize = 9.sp, color = TextMuted, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "₹${String.format("%.2f", t7Nav)}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${if (t7Pct >= 0) "+" else ""}${String.format("%.2f", t7Pct)}%",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (t7Pct >= 0) BullishGreen else BearishRed
+                        )
+                    }
+                }
+
+                // 21-Day Card
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    color = SurfaceDark,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(0.5.dp, PrimaryBlue.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text("21-DAY TARGET", fontSize = 9.sp, color = PrimaryBlueLight, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "₹${String.format("%.2f", targetNav)}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${if (retPct >= 0) "+" else ""}${String.format("%.2f", retPct)}%",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (retPct >= 0) BullishGreen else BearishRed
+                        )
+                    }
+                }
+
+                // 30-Day Card
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    color = SurfaceDark,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(0.5.dp, CardBorder)
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text("30-DAY TARGET", fontSize = 9.sp, color = TextMuted, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "₹${String.format("%.2f", t30Nav)}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${if (t30Pct >= 0) "+" else ""}${String.format("%.2f", t30Pct)}%",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (t30Pct >= 0) BullishGreen else BearishRed
+                        )
+                    }
+                }
+            }
+
+            // Probabilistic Corridor (Bull breakout vs Bear support)
+            if (bearTargetNav != null && bullTargetNav != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = SurfaceDark.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(0.5.dp, CardBorder)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🐻 Support: ₹${String.format("%.2f", bearTargetNav)}",
+                            fontSize = 10.sp,
+                            color = BearishRed,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "90% Probabilistic Range",
+                            fontSize = 9.sp,
+                            color = TextMuted
+                        )
+                        Text(
+                            text = "🐂 Bull: ₹${String.format("%.2f", bullTargetNav)}",
+                            fontSize = 10.sp,
+                            color = BullishGreen,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }

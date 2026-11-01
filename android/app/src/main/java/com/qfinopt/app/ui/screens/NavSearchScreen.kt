@@ -2,6 +2,7 @@ package com.qfinopt.app.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,7 +22,10 @@ import com.qfinopt.app.ui.theme.*
 import com.qfinopt.app.ui.viewmodel.MainViewModel
 
 @Composable
-fun NavSearchScreen(viewModel: MainViewModel) {
+fun NavSearchScreen(
+    viewModel: MainViewModel,
+    onNavigateToAnalysis: (() -> Unit)? = null
+) {
     val searchResult by viewModel.navSearchResult.collectAsState()
     val isLoading by viewModel.isNavSearchLoading.collectAsState()
     var searchInput by remember { mutableStateOf("") }
@@ -39,7 +43,7 @@ fun NavSearchScreen(viewModel: MainViewModel) {
             color = TextPrimary
         )
         Text(
-            text = "Official AMFI India database updated daily at 11 PM IST.",
+            text = "Official AMFI India database. Tap any fund to run real AI predictions & analysis.",
             fontSize = 12.sp,
             color = TextSecondary
         )
@@ -52,7 +56,7 @@ fun NavSearchScreen(viewModel: MainViewModel) {
                 viewModel.searchLiveNav(it)
             },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search by name (e.g. SBI, HDFC, Quant, Axis)...", fontSize = 13.sp, color = TextMuted) },
+            placeholder = { Text("Search by name (e.g. SBI, HDFC, Quant, Parag Parikh)...", fontSize = 13.sp, color = TextMuted) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
             trailingIcon = {
                 if (searchInput.isNotEmpty()) {
@@ -86,9 +90,9 @@ fun NavSearchScreen(viewModel: MainViewModel) {
                 MetricCard(label = "HIGHEST NAV", value = "₹${res.highestNav}", modifier = Modifier.weight(1f))
             }
             Text(
-                text = "Showing ${res.results.size} matches (${res.totalMatches} total)",
+                text = "Showing ${res.results.size} matches (${res.totalMatches} total) — Tap to Predict",
                 fontSize = 11.sp,
-                color = TextMuted
+                color = AccentGold
             )
         }
 
@@ -102,7 +106,12 @@ fun NavSearchScreen(viewModel: MainViewModel) {
             ) {
                 items(searchResult!!.results) { item ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                viewModel.selectFund(item.name)
+                                onNavigateToAnalysis?.invoke()
+                            },
                         shape = RoundedCornerShape(10.dp),
                         colors = CardDefaults.cardColors(containerColor = SurfaceDark),
                         border = BorderStroke(1.dp, CardBorder)
@@ -121,11 +130,20 @@ fun NavSearchScreen(viewModel: MainViewModel) {
                                     maxLines = 2
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Code: ${item.code} • Date: ${item.date}",
-                                    fontSize = 10.sp,
-                                    color = TextMuted
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Code: ${item.code} • ${item.date}",
+                                        fontSize = 10.sp,
+                                        color = TextMuted
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "⚡ Predict ➔",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = PrimaryBlueLight
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Column(horizontalAlignment = Alignment.End) {

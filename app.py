@@ -1082,8 +1082,13 @@ with tab3:
         last_val, last_date = values[-1], dates[-1]
         fut_dates = list(pd.bdate_range(last_date + pd.Timedelta(days=1), periods=forecast_days3))
         
-        # Historical equilibrium daily return (+0.02% to +0.10%/day, ~5% to 25% annualized CAGR)
-        mu_eq = float(np.clip(mu_real if not np.isnan(mu_real) else 0.05, 0.02, 0.10))
+        # Regime-aware equilibrium daily return (does not force optimistic upward drift in downtrend)
+        if mu_trend < -0.02:
+            mu_eq = min(0.0, mu_trend * 0.4)
+        elif mu_trend < 0.02:
+            mu_eq = 0.0
+        else:
+            mu_eq = float(np.clip(mu_real if not np.isnan(mu_real) else 0.05, 0.02, 0.10))
         sigma_d = float(np.clip(sigma_real if not np.isnan(sigma_real) else 0.85, 0.35, 2.0))
         phi = 0.92  # Half-life ~9 trading days
         
@@ -1575,7 +1580,12 @@ with tab6:
                 slope_5d = (w_vals[-1] - w_vals[max(0, w_len - 5)]) / max(1, min(4, w_len - 1))
                 mu_f = float(0.60 * slope_5d + 0.40 * slope_reg)
                 f_daily_mu = float(fdf["Daily_Return_%"].dropna().mean()) if "Daily_Return_%" in fdf.columns and len(fdf["Daily_Return_%"].dropna()) > 10 else 0.05
-                mu_eq_f = float(np.clip(f_daily_mu, 0.02, 0.10))
+                if mu_f < -0.02:
+                    mu_eq_f = min(0.0, mu_f * 0.4)
+                elif mu_f < 0.02:
+                    mu_eq_f = 0.0
+                else:
+                    mu_eq_f = float(np.clip(f_daily_mu, 0.02, 0.10))
                 phi = 0.92
 
                 last_val, last_date = values[-1], dates[-1]

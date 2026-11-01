@@ -239,7 +239,13 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                     if (exploreSubTab == 0) {
-                                        NavSearchScreen(viewModel = viewModel)
+                                        NavSearchScreen(
+                                            viewModel = viewModel,
+                                            onNavigateToAnalysis = {
+                                                analysisSubTab = 0
+                                                currentDestination = NavDestination.ANALYSIS
+                                            }
+                                        )
                                     } else {
                                         PlatformScreen(viewModel = viewModel)
                                     }

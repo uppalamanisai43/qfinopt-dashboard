@@ -1,5 +1,6 @@
 import io
 import os
+import numpy as np
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -656,7 +657,6 @@ def qaoa_portfolio_optimize(req: QAOAOptimizeRequest):
             )
 
         # Build correlation matrix from aligned return series
-        import numpy as np
         min_len = min(len(s) for s in fund_series.values())
         aligned = np.array([s[-min_len:] for s in fund_series.values()])
         corr_matrix = np.corrcoef(aligned).tolist()

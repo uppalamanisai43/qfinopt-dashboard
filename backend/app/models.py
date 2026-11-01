@@ -41,6 +41,15 @@ class FundStatsResponse(BaseModel):
     conviction_score: Optional[float] = None
     pred_21d_ret_pct: Optional[float] = None
     pred_target_nav: Optional[float] = None
+    pred_7d_ret_pct: Optional[float] = None
+    pred_7d_target_nav: Optional[float] = None
+    pred_30d_ret_pct: Optional[float] = None
+    pred_30d_target_nav: Optional[float] = None
+    bear_target_nav: Optional[float] = None
+    bull_target_nav: Optional[float] = None
+    high_52w: Optional[float] = None
+    low_52w: Optional[float] = None
+    sparkline_navs: Optional[List[float]] = None
     win_probability: Optional[float] = None
     key_drivers: Optional[List[str]] = None
 
@@ -140,13 +149,21 @@ class FundHistoryResponse(BaseModel):
     conviction_score: Optional[float] = None
     pred_21d_ret_pct: Optional[float] = None
     pred_target_nav: Optional[float] = None
+    pred_7d_ret_pct: Optional[float] = None
+    pred_7d_target_nav: Optional[float] = None
+    pred_30d_ret_pct: Optional[float] = None
+    pred_30d_target_nav: Optional[float] = None
+    bear_target_nav: Optional[float] = None
+    bull_target_nav: Optional[float] = None
+    high_52w: Optional[float] = None
+    low_52w: Optional[float] = None
     win_probability: Optional[float] = None
     key_drivers: Optional[List[str]] = None
     sortino: Optional[float] = None
     mdd: Optional[float] = None
-    hist_return_bins: List[float]
-    hist_return_counts: List[int]
-    stats: List[Dict[str, str]]
+    hist_return_bins: Optional[List[float]] = None
+    hist_return_counts: Optional[List[int]] = None
+    stats: Optional[List[Dict[str, str]]] = None
 
 class CompareRequest(BaseModel):
     fund_names: List[str]

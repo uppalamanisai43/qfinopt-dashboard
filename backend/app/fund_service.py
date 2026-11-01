@@ -63,7 +63,13 @@ def extract_fund_features(fund_df: pd.DataFrame) -> Optional[pd.DataFrame]:
     if fund_df is None or fund_df.empty or len(fund_df) < 15:
         return None
 
-    navs = fund_df["NAV_Value"].values
+    if "NAV_Value" in fund_df.columns:
+        navs = fund_df["NAV_Value"].values
+    elif "nav" in fund_df.columns:
+        navs = fund_df["nav"].values
+    else:
+        return None
+
     if "Daily_Return_%" in fund_df.columns and len(fund_df["Daily_Return_%"].dropna()) > 5:
         daily_rets = fund_df["Daily_Return_%"].dropna().values / 100.0
     else:
@@ -110,26 +116,58 @@ def extract_fund_features(fund_df: pd.DataFrame) -> Optional[pd.DataFrame]:
     data = [[ret_5d, ret_10d, ret_21d, vol_10d, vol_30d, mom_ratio, rsi_14, nav_z, sharpe, alpha, beta, expense]]
     return pd.DataFrame(data, columns=feature_cols)
 
-def compute_ml_prediction_details(fund_df: pd.DataFrame, display_nav: float) -> Tuple[Optional[float], Optional[float], float, str, float, List[str]]:
+def compute_ml_prediction_bundle(fund_df: pd.DataFrame, display_nav: float) -> Dict[str, Any]:
     """
     Run 12-factor trained HistGradientBoosting model (74% directional accuracy)
-    and produce concrete, explainable predictions:
-    Returns (pred_21d_ret_pct, pred_target_nav, win_probability, signal, conviction_score, key_drivers).
+    and produce concrete, multi-horizon probabilistic predictions.
     """
     model, meta = load_production_ml_model()
     signal = "ACCUMULATE"
     conviction_score = 68.0
-    pred_21d_ret_pct = None
-    pred_target_nav = None
     win_probability = 72.0
     key_drivers: List[str] = []
 
+    pred_7d_ret_pct = None
+    pred_7d_target_nav = None
+    pred_21d_ret_pct = None
+    pred_target_nav = None
+    pred_30d_ret_pct = None
+    pred_30d_target_nav = None
+    bull_target_nav = None
+    bear_target_nav = None
+
     if model is None or fund_df is None or fund_df.empty:
-        return pred_21d_ret_pct, pred_target_nav, win_probability, signal, conviction_score, key_drivers
+        return {
+            "pred_21d_ret_pct": pred_21d_ret_pct,
+            "pred_target_nav": pred_target_nav,
+            "pred_7d_ret_pct": pred_7d_ret_pct,
+            "pred_7d_target_nav": pred_7d_target_nav,
+            "pred_30d_ret_pct": pred_30d_ret_pct,
+            "pred_30d_target_nav": pred_30d_target_nav,
+            "bull_target_nav": bull_target_nav,
+            "bear_target_nav": bear_target_nav,
+            "win_probability": win_probability,
+            "signal": signal,
+            "conviction_score": conviction_score,
+            "key_drivers": key_drivers
+        }
 
     feat_df = extract_fund_features(fund_df)
     if feat_df is None:
-        return pred_21d_ret_pct, pred_target_nav, win_probability, signal, conviction_score, key_drivers
+        return {
+            "pred_21d_ret_pct": pred_21d_ret_pct,
+            "pred_target_nav": pred_target_nav,
+            "pred_7d_ret_pct": pred_7d_ret_pct,
+            "pred_7d_target_nav": pred_7d_target_nav,
+            "pred_30d_ret_pct": pred_30d_ret_pct,
+            "pred_30d_target_nav": pred_30d_target_nav,
+            "bull_target_nav": bull_target_nav,
+            "bear_target_nav": bear_target_nav,
+            "win_probability": win_probability,
+            "signal": signal,
+            "conviction_score": conviction_score,
+            "key_drivers": key_drivers
+        }
 
     try:
         raw_pred = float(model.predict(feat_df)[0])
@@ -140,14 +178,29 @@ def compute_ml_prediction_details(fund_df: pd.DataFrame, display_nav: float) -> 
         r10 = float(feat_df['ret_10d'].iloc[0])
         r21 = float(feat_df['ret_21d'].iloc[0])
         rsi = float(feat_df['rsi_14'].iloc[0])
+        vol = float(feat_df['vol_10d'].iloc[0])
 
         # Directional momentum drag & RSI oscillator adjustment
         mom_component = 0.40 * r5 + 0.25 * r10 + 0.15 * r21
         rsi_adj = (rsi - 50.0) / 100.0 * 0.01
         pred_ret = excess_alpha + mom_component + rsi_adj
 
+        # Multi-horizon forecast
         pred_21d_ret_pct = round(pred_ret * 100.0, 2)
         pred_target_nav = round(display_nav * (1.0 + pred_ret), 2)
+
+        pred_7d_ret = (pred_ret / 21.0) * 7.0 + 0.25 * r5
+        pred_7d_ret_pct = round(pred_7d_ret * 100.0, 2)
+        pred_7d_target_nav = round(display_nav * (1.0 + pred_7d_ret), 2)
+
+        pred_30d_ret = pred_ret * ((30.0 / 21.0) ** 0.85)
+        pred_30d_ret_pct = round(pred_30d_ret * 100.0, 2)
+        pred_30d_target_nav = round(display_nav * (1.0 + pred_30d_ret), 2)
+
+        # Volatility-calibrated support & resistance bounds (90% confidence corridor)
+        corridor = 1.645 * max(0.005, vol) * np.sqrt(21.0)
+        bull_target_nav = round(display_nav * (1.0 + pred_ret + corridor), 2)
+        bear_target_nav = round(display_nav * (1.0 + pred_ret - corridor), 2)
 
         if pred_ret >= 0.030 and r5 > 0:
             signal = "STRONG BUY"
@@ -168,32 +221,27 @@ def compute_ml_prediction_details(fund_df: pd.DataFrame, display_nav: float) -> 
 
         # Feature interpretation for Explainable AI (XAI)
         mom = float(feat_df['mom_ratio'].iloc[0])
-        ret5 = float(feat_df['ret_5d'].iloc[0]) * 100.0
-        ret21 = float(feat_df['ret_21d'].iloc[0]) * 100.0
+        ret5_pct = r5 * 100.0
+        ret21_pct = r21 * 100.0
         alpha = float(feat_df['Alpha'].iloc[0])
         sharpe = float(feat_df['Sharpe'].iloc[0])
-        vol = float(feat_df['vol_10d'].iloc[0]) * 100.0
-        ter = float(feat_df['Expense_Ratio'].iloc[0])
 
-        # Driver 1: Momentum & Inflows
-        if mom >= 0.4 and ret5 > 0:
-            key_drivers.append(f"Momentum Ratio (+{mom:.2f}): Strong short-term buying inflows (+{ret5:.2f}% 5D return).")
-        elif mom >= 0.0 and ret5 >= 0:
+        if mom >= 0.4 and ret5_pct > 0:
+            key_drivers.append(f"Momentum Ratio (+{mom:.2f}): Strong short-term buying inflows (+{ret5_pct:.2f}% 5D return).")
+        elif mom >= 0.0 and ret5_pct >= 0:
             key_drivers.append(f"Momentum Ratio (+{mom:.2f}): Steady buying pressure supporting the price trend.")
-        elif ret5 < -1.0:
-            key_drivers.append(f"Downside Velocity ({ret5:.2f}% 5D): Short-term profit taking and downward pressure observed.")
+        elif ret5_pct < -1.0:
+            key_drivers.append(f"Downside Velocity ({ret5_pct:.2f}% 5D): Short-term profit taking and downward pressure observed.")
         else:
-            key_drivers.append(f"Momentum Ratio ({mom:.2f}): Short-term consolidation phase after {ret21:.2f}% 21D movement.")
+            key_drivers.append(f"Momentum Ratio ({mom:.2f}): Short-term consolidation phase after {ret21_pct:.2f}% 21D movement.")
 
-        # Driver 2: RSI Technical Health
         if rsi < 38.0:
-            key_drivers.append(f"RSI-14 ({rsi:.1f}): Near oversold territory — caution advised until reversal confirms.")
+            key_drivers.append(f"RSI-14 ({rsi:.1f}): Near oversold territory — technical reversal support expected.")
         elif rsi <= 62.0:
             key_drivers.append(f"RSI-14 ({rsi:.1f}): Healthy accumulation zone with balanced risk-reward.")
         else:
-            key_drivers.append(f"RSI-14 ({rsi:.1f}): Elevated momentum — watch for overbought exhaustion.")
+            key_drivers.append(f"RSI-14 ({rsi:.1f}): Elevated momentum — watch for overbought resistance.")
 
-        # Driver 3: Fund Alpha & Skill
         if alpha >= 2.0:
             key_drivers.append(f"Alpha (+{alpha:.2f}%): Outstanding active fund manager skill beating the category benchmark.")
         elif alpha >= 0.0:
@@ -201,117 +249,40 @@ def compute_ml_prediction_details(fund_df: pd.DataFrame, display_nav: float) -> 
         else:
             key_drivers.append(f"Sharpe ({sharpe:.2f}): Returns track broader market with moderate risk sensitivity.")
 
-        # Driver 4: Target Forecast
         ret_sign = "+" if pred_21d_ret_pct >= 0 else ""
-        key_drivers.append(f"Price Target: Expected NAV ₹{pred_target_nav:.2f} ({ret_sign}{pred_21d_ret_pct:.2f}% in 21 trading days / 1 month).")
+        key_drivers.append(f"1-Month Target: Expected NAV ₹{pred_target_nav:.2f} ({ret_sign}{pred_21d_ret_pct:.2f}% in 21 trading days).")
+        key_drivers.append(f"Target Corridor: Support ₹{bear_target_nav:.2f} | Bull Breakout ₹{bull_target_nav:.2f}.")
 
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Warning: ML inference issue: {e}")
 
-    return pred_21d_ret_pct, pred_target_nav, round(win_probability, 1), signal, round(conviction_score, 1), key_drivers
+    return {
+        "pred_21d_ret_pct": pred_21d_ret_pct,
+        "pred_target_nav": pred_target_nav,
+        "pred_7d_ret_pct": pred_7d_ret_pct,
+        "pred_7d_target_nav": pred_7d_target_nav,
+        "pred_30d_ret_pct": pred_30d_ret_pct,
+        "pred_30d_target_nav": pred_30d_target_nav,
+        "bull_target_nav": bull_target_nav,
+        "bear_target_nav": bear_target_nav,
+        "win_probability": round(win_probability, 1),
+        "signal": signal,
+        "conviction_score": round(conviction_score, 1),
+        "key_drivers": key_drivers
+    }
 
-def get_fund_stats(fund_name: str) -> FundStatsResponse:
-    """Retrieve full statistical indicators for a mutual fund with robust fallback."""
-    df = load_historical_data()
-    fund_df = df[df["Scheme_Name"] == fund_name]
-    if fund_df.empty:
-        # Try normalized matching
-        clean_target = (fund_name or "").strip().lower().replace("-", " ").replace("–", " ").replace("—", " ")
-        matched_name = None
-        for name in df["Scheme_Name"].dropna().unique():
-            if name.strip().lower().replace("-", " ").replace("–", " ").replace("—", " ") == clean_target:
-                matched_name = name
-                break
-        if not matched_name:
-            import difflib
-            all_funds = df["Scheme_Name"].dropna().unique().tolist()
-            if fund_name and fund_name.strip():
-                matches = difflib.get_close_matches(fund_name, all_funds, n=1, cutoff=0.3)
-                if matches:
-                    matched_name = matches[0]
-            if not matched_name and all_funds:
-                matched_name = all_funds[0]
-        if matched_name:
-            fund_df = df[df["Scheme_Name"] == matched_name]
-            fund_name = matched_name
-
-    if fund_df.empty:
-        raise ValueError(f"Fund '{fund_name}' not found.")
-    fund_df = fund_df.sort_values("Date")
-
-    mu_real = float(fund_df["Daily_Return_%"].mean())
-    sigma_real = float(fund_df["Daily_Return_%"].std())
-    sharpe_val = float(fund_df["Sharpe"].mean())
-    alpha_val = float(fund_df["Alpha"].mean())
-    beta_val = float(fund_df["Beta"].mean())
-    expense = float(fund_df["Expense_Ratio"].mean())
-    risk_level = str(fund_df["Risk_Level"].iloc[-1])
-    category = str(fund_df["Sheet_Category"].iloc[-1])
-    hist_nav = float(fund_df["NAV_Value"].iloc[-1])
-
-    nav_1y = float(fund_df["NAV_Value"].iloc[-252] if len(fund_df) > 252 else fund_df["NAV_Value"].iloc[0])
-    ret_1y = ((hist_nav - nav_1y) / nav_1y) * 100.0
-
-    # AMFI Live NAV check
-    nav_today = get_live_nav_amfi()
-    amfi_match = match_fund_amfi_nav(fund_name, nav_today)
-    if amfi_match:
-        display_nav = amfi_match[1]
-        nav_source = "📡 LIVE"
-    else:
-        display_nav = hist_nav
-        nav_source = "📁 Historical"
-
-    sentiment, month_ret, week_ret = get_market_sentiment()
-    try:
-        mu_adjusted = mu_real + (week_ret / 500.0 * beta_val)
-    except Exception:
-        mu_adjusted = mu_real
-
-    # Downside deviation & Sortino Ratio
-    rets = fund_df["Daily_Return_%"].dropna()
-    downside = rets[rets < 0]
-    downside_sd = float(downside.std()) if len(downside) > 0 else sigma_real
-    sortino_val = (mu_real * 252.0) / (downside_sd * np.sqrt(252.0)) if downside_sd > 0 else sharpe_val
-
-    # Maximum Drawdown (MDD)
-    nav_series = fund_df["NAV_Value"].values
-    if len(nav_series) > 0:
-        cummax = np.maximum.accumulate(nav_series)
-        drawdowns = (nav_series - cummax) / np.maximum(cummax, 1e-6)
-        mdd_val = float(drawdowns.min()) * 100.0
-    else:
-        mdd_val = 0.0
-
-    # ML Inference for Real Prediction, Target NAV & Key Drivers
-    pred_21d_ret_pct, pred_target_nav, win_probability, signal, conviction_score, key_drivers = compute_ml_prediction_details(fund_df, display_nav)
-
-    return FundStatsResponse(
-        fund_name=fund_name,
-        category=category,
-        risk_level=risk_level,
-        display_nav=round(display_nav, 2),
-        nav_source=nav_source,
-        ret_1y=round(ret_1y, 2),
-        sharpe_val=round(sharpe_val, 3),
-        alpha_val=round(alpha_val, 3),
-        beta_val=round(beta_val, 3),
-        expense=round(expense, 2),
-        mu_real=round(mu_real, 4),
-        sigma_real=round(sigma_real, 4),
-        mu_adjusted=round(mu_adjusted, 4),
-        sentiment=sentiment,
-        sortino_val=round(sortino_val, 3),
-        mdd_val=round(mdd_val, 2),
-        signal=signal,
-        conviction_score=conviction_score,
-        pred_21d_ret_pct=pred_21d_ret_pct,
-        pred_target_nav=pred_target_nav,
-        win_probability=win_probability,
-        key_drivers=key_drivers
+def compute_ml_prediction_details(fund_df: pd.DataFrame, display_nav: float) -> Tuple[Optional[float], Optional[float], float, str, float, List[str]]:
+    b = compute_ml_prediction_bundle(fund_df, display_nav)
+    return (
+        b["pred_21d_ret_pct"],
+        b["pred_target_nav"],
+        b["win_probability"],
+        b["signal"],
+        b["conviction_score"],
+        b["key_drivers"]
     )
 
-def resolve_mfapi_code(fund_name: str, fallback_code: str) -> str:
+def resolve_mfapi_code(fund_name: str, fallback_code: str = "") -> str:
     """Resolve fund name to mfapi.in scheme code."""
     if fund_name in _mfapi_code_cache:
         return _mfapi_code_cache[fund_name]
@@ -365,6 +336,8 @@ def resolve_mfapi_code(fund_name: str, fallback_code: str) -> str:
 
 def get_live_nav_history_mfapi(code: str) -> Optional[pd.DataFrame]:
     """Fetch daily NAV history for a fund from mfapi.in."""
+    if not code:
+        return None
     if code in _mfapi_hist_cache:
         return _mfapi_hist_cache[code]
 
@@ -385,6 +358,167 @@ def get_live_nav_history_mfapi(code: str) -> Optional[pd.DataFrame]:
         pass
 
     return None
+
+def get_or_build_fund_df(fund_name: str) -> Tuple[str, pd.DataFrame, str]:
+    """
+    Returns (matched_fund_name, fund_df, scheme_code).
+    1. Checks if fund is in the local DataFrame (exact, normalized, or fuzzy).
+    2. If not found or empty, resolves scheme code via resolve_mfapi_code and downloads
+       full daily NAV history from mfapi.in, computing all necessary financial indicators.
+    """
+    df = load_historical_data()
+    fund_df = df[df["Scheme_Name"] == fund_name]
+
+    if not fund_df.empty:
+        sc = str(fund_df["Scheme_Code"].iloc[-1]).split(".")[0]
+        return fund_name, fund_df.sort_values("Date"), sc
+
+    clean_target = (fund_name or "").strip().lower().replace("-", " ").replace("–", " ").replace("—", " ")
+    for name in df["Scheme_Name"].dropna().unique():
+        if name.strip().lower().replace("-", " ").replace("–", " ").replace("—", " ") == clean_target:
+            matched_df = df[df["Scheme_Name"] == name].sort_values("Date")
+            sc = str(matched_df["Scheme_Code"].iloc[-1]).split(".")[0]
+            return name, matched_df, sc
+
+    import difflib
+    all_funds = df["Scheme_Name"].dropna().unique().tolist()
+    if fund_name and fund_name.strip():
+        matches = difflib.get_close_matches(fund_name, all_funds, n=1, cutoff=0.5)
+        if matches:
+            matched_df = df[df["Scheme_Name"] == matches[0]].sort_values("Date")
+            sc = str(matched_df["Scheme_Code"].iloc[-1]).split(".")[0]
+            return matches[0], matched_df, sc
+
+    # Dynamic Fallback: Fetch from mfapi.in live history
+    scheme_code = resolve_mfapi_code(fund_name, "")
+    if scheme_code:
+        hist_api = get_live_nav_history_mfapi(scheme_code)
+        if hist_api is not None and not hist_api.empty and len(hist_api) > 10:
+            hist_sorted = hist_api.sort_values("date").reset_index(drop=True)
+            daily_pct = hist_sorted["nav"].pct_change() * 100.0
+            mean_ret = float(daily_pct.mean()) if not daily_pct.empty else 0.05
+            std_ret = float(daily_pct.std()) if not daily_pct.empty else 1.0
+            sharpe = (mean_ret * 252.0 - 6.5) / (std_ret * np.sqrt(252.0) + 1e-6)
+            alpha = (mean_ret * 252.0) - 12.0
+
+            built_df = pd.DataFrame({
+                "Date": hist_sorted["date"],
+                "NAV_Value": hist_sorted["nav"],
+                "Scheme_Name": fund_name,
+                "Scheme_Code": scheme_code,
+                "Risk_Level": "Moderate to High",
+                "Sheet_Category": "Equity / Dynamic",
+                "Daily_Return_%": daily_pct,
+                "Sharpe": round(sharpe, 3),
+                "Alpha": round(alpha, 3),
+                "Beta": 1.0,
+                "Expense_Ratio": 1.15,
+            })
+            return fund_name, built_df, scheme_code
+
+    fallback_name = all_funds[0] if all_funds else fund_name
+    fb_df = df[df["Scheme_Name"] == fallback_name].sort_values("Date")
+    sc = str(fb_df["Scheme_Code"].iloc[-1]).split(".")[0] if not fb_df.empty else "120503"
+    return fallback_name, fb_df, sc
+
+def get_fund_stats(fund_name: str) -> FundStatsResponse:
+    """Retrieve full statistical indicators for a mutual fund with robust fallback."""
+    matched_name, fund_df, scheme_code = get_or_build_fund_df(fund_name)
+    fund_name = matched_name
+
+    mu_real = float(fund_df["Daily_Return_%"].mean())
+    sigma_real = float(fund_df["Daily_Return_%"].std())
+    sharpe_val = float(fund_df["Sharpe"].mean()) if "Sharpe" in fund_df.columns else 1.0
+    alpha_val = float(fund_df["Alpha"].mean()) if "Alpha" in fund_df.columns else 0.0
+    beta_val = float(fund_df["Beta"].mean()) if "Beta" in fund_df.columns else 1.0
+    expense = float(fund_df["Expense_Ratio"].mean()) if "Expense_Ratio" in fund_df.columns else 1.2
+    risk_level = str(fund_df["Risk_Level"].iloc[-1]) if "Risk_Level" in fund_df.columns else "Moderate"
+    category = str(fund_df["Sheet_Category"].iloc[-1]) if "Sheet_Category" in fund_df.columns else "Equity"
+    hist_nav = float(fund_df["NAV_Value"].iloc[-1])
+
+    nav_1y = float(fund_df["NAV_Value"].iloc[-252] if len(fund_df) > 252 else fund_df["NAV_Value"].iloc[0])
+    ret_1y = ((hist_nav - nav_1y) / nav_1y) * 100.0
+
+    # AMFI Live NAV check
+    nav_today = get_live_nav_amfi()
+    amfi_match = match_fund_amfi_nav(fund_name, nav_today)
+    if amfi_match:
+        display_nav = amfi_match[1]
+        nav_source = "📡 LIVE"
+    else:
+        display_nav = hist_nav
+        nav_source = "📁 Historical"
+
+    sentiment, month_ret, week_ret = get_market_sentiment()
+    try:
+        mu_adjusted = mu_real + (week_ret / 500.0 * beta_val)
+    except Exception:
+        mu_adjusted = mu_real
+
+    # Downside deviation & Sortino Ratio
+    rets = fund_df["Daily_Return_%"].dropna()
+    downside = rets[rets < 0]
+    downside_sd = float(downside.std()) if len(downside) > 0 else sigma_real
+    sortino_val = (mu_real * 252.0) / (downside_sd * np.sqrt(252.0)) if downside_sd > 0 else sharpe_val
+
+    # Maximum Drawdown (MDD)
+    nav_series = fund_df["NAV_Value"].values
+    if len(nav_series) > 0:
+        cummax = np.maximum.accumulate(nav_series)
+        drawdowns = (nav_series - cummax) / np.maximum(cummax, 1e-6)
+        mdd_val = float(drawdowns.min()) * 100.0
+    else:
+        mdd_val = 0.0
+
+    # Real 52-Week High and Low from historical data
+    last_252 = fund_df.tail(252) if len(fund_df) >= 252 else fund_df
+    high_52w = round(float(last_252["NAV_Value"].max()), 2) if not last_252.empty else round(display_nav, 2)
+    low_52w = round(float(last_252["NAV_Value"].min()), 2) if not last_252.empty else round(display_nav, 2)
+    high_52w = max(high_52w, round(display_nav, 2))
+    low_52w = min(low_52w, round(display_nav, 2))
+
+    # Real Sparkline NAVs (last 20 daily NAV values)
+    recent_navs = [round(float(v), 2) for v in fund_df["NAV_Value"].dropna().tail(20).tolist()]
+    if amfi_match and display_nav:
+        recent_navs.append(round(display_nav, 2))
+    sparkline_navs = recent_navs
+
+    # ML Inference for Real Multi-Horizon Predictions
+    pred_bundle = compute_ml_prediction_bundle(fund_df, display_nav)
+
+    return FundStatsResponse(
+        fund_name=fund_name,
+        category=category,
+        risk_level=risk_level,
+        display_nav=round(display_nav, 2),
+        nav_source=nav_source,
+        ret_1y=round(ret_1y, 2),
+        sharpe_val=round(sharpe_val, 3),
+        alpha_val=round(alpha_val, 3),
+        beta_val=round(beta_val, 3),
+        expense=round(expense, 2),
+        mu_real=round(mu_real, 4),
+        sigma_real=round(sigma_real, 4),
+        mu_adjusted=round(mu_adjusted, 4),
+        sentiment=sentiment,
+        sortino_val=round(sortino_val, 3),
+        mdd_val=round(mdd_val, 2),
+        signal=pred_bundle["signal"],
+        conviction_score=pred_bundle["conviction_score"],
+        pred_21d_ret_pct=pred_bundle["pred_21d_ret_pct"],
+        pred_target_nav=pred_bundle["pred_target_nav"],
+        pred_7d_ret_pct=pred_bundle["pred_7d_ret_pct"],
+        pred_7d_target_nav=pred_bundle["pred_7d_target_nav"],
+        pred_30d_ret_pct=pred_bundle["pred_30d_ret_pct"],
+        pred_30d_target_nav=pred_bundle["pred_30d_target_nav"],
+        bear_target_nav=pred_bundle["bear_target_nav"],
+        bull_target_nav=pred_bundle["bull_target_nav"],
+        high_52w=high_52w,
+        low_52w=low_52w,
+        sparkline_navs=sparkline_navs,
+        win_probability=pred_bundle["win_probability"],
+        key_drivers=pred_bundle["key_drivers"]
+    )
 
 def compute_dynamic_forecast(
     values: List[float],
@@ -426,10 +560,6 @@ def compute_dynamic_forecast(
 
     sigma_daily = float(np.clip(sigma_daily, 0.003, 0.022))
 
-    # Long-term equilibrium daily drift based on annualized CAGR
-    eq_cagr = max(6.0, min(24.0, cagr_annual_pct)) / 100.0
-    mu_eq_daily = ((1.0 + eq_cagr) ** (1.0 / 252.0)) - 1.0
-
     # 2. Multi-horizon Momentum & Velocity via Regression
     if len(values) >= 5:
         w_len = min(14, len(values))
@@ -460,34 +590,51 @@ def compute_dynamic_forecast(
                 r10 = float(feat_df['ret_10d'].iloc[0])
                 r21 = float(feat_df['ret_21d'].iloc[0])
                 rsi = float(feat_df['rsi_14'].iloc[0])
-                mom_comp = 0.40 * r5 + 0.25 * r10 + 0.15 * r21
-                rsi_adj = (rsi - 50.0) / 100.0 * 0.01
-                pred_21d_ret = excess_alpha + mom_comp + rsi_adj
+                z_score = float(feat_df['nav_z'].iloc[0])
+
+                # Technical & Regime Corrections:
+                # 1. Overbought exhaustion (RSI > 65 pulls down, RSI < 35 offers support)
+                rsi_adj = -0.015 * ((rsi - 60.0) / 40.0) if rsi > 60.0 else (0.010 * ((40.0 - rsi) / 40.0) if rsi < 40.0 else 0.0)
+
+                # 2. Mean-reversion penalty for stretched Z-scores
+                z_adj = -0.012 * (z_score - 1.0) if z_score > 1.2 else (0.010 * (-1.0 - z_score) if z_score < -1.2 else 0.0)
+
+                # 3. Momentum component (heavily weight recent 5-day drop/gain)
+                mom_comp = 0.45 * r5 + 0.30 * r10 + 0.15 * r21
+
+                # 4. Macro market drag if broader indices are in a correction
+                macro_drag = min(0.0, (market_weekly_ret / 100.0) * beta)
+
+                pred_21d_ret = excess_alpha + mom_comp + rsi_adj + z_adj + macro_drag
             except Exception:
                 pred_21d_ret = None
 
     if pred_21d_ret is not None:
         # Convert predicted 21d return into daily drift
         ml_daily_drift = pred_21d_ret / 21.0
-        # Blend ML drift (65%) with observed momentum (35%)
-        blended_initial_drift = 0.65 * ml_daily_drift + 0.35 * recent_momentum
+        # Blend ML drift (55%) with observed momentum (45%)
+        blended_initial_drift = 0.55 * ml_daily_drift + 0.45 * recent_momentum
 
-        if pred_21d_ret >= 0.030 and recent_momentum > 0:
+        if pred_21d_ret >= 0.025 and recent_momentum > 0.0002:
             signal = "STRONG BUY"
-            conviction_score = min(92.0, 75.0 + (pred_21d_ret - 0.030) * 200.0)
+            conviction_score = min(92.0, 75.0 + (pred_21d_ret - 0.025) * 200.0)
             trend_label, trend_icon = "AI Strong Bullish Momentum", "🚀"
-        elif pred_21d_ret >= 0.008:
+        elif pred_21d_ret >= 0.005 and recent_momentum >= -0.0003:
             signal = "ACCUMULATE"
             conviction_score = min(78.0, 65.0 + pred_21d_ret * 150.0)
             trend_label, trend_icon = "AI Moderate Growth Trend", "📈"
-        elif pred_21d_ret >= -0.008:
+        elif pred_21d_ret >= -0.008 and recent_momentum >= -0.0008:
             signal = "HOLD / NEUTRAL"
             conviction_score = 55.0
-            trend_label, trend_icon = "AI Sideways / Stable", "⚖️"
-        else:
+            trend_label, trend_icon = "AI Consolidation / Stable", "⚖️"
+        elif pred_21d_ret < -0.020 or recent_momentum < -0.0015:
             signal = "CAUTION / TRIM"
-            conviction_score = max(35.0, 65.0 + pred_21d_ret * 200.0)
+            conviction_score = max(35.0, 68.0 + pred_21d_ret * 200.0)
             trend_label, trend_icon = "AI Downside Pressure / Pullback", "🔻"
+        else:
+            signal = "CAUTION / DOWNTREND"
+            conviction_score = max(40.0, 60.0 + pred_21d_ret * 150.0)
+            trend_label, trend_icon = "AI Downside Risk / Correction", "📉"
     else:
         # Fallback to momentum trend classification
         annualized_trend = (blended_initial_drift * 252.0) * 100.0
@@ -512,26 +659,54 @@ def compute_dynamic_forecast(
             conviction_score = 55.0
             trend_label, trend_icon = "Sideways / Stable", "⚖️"
 
-    # 4. Generate dynamic forecast path & 95% Confidence Corridor
+    # 4. Regime-Aware Equilibrium Drift: Does NOT blindly force a positive bounce
+    if blended_initial_drift < -0.0002:
+        # Fund is in an active downward move / pullback
+        if market_weekly_ret < 0:
+            # Macro market is also dropping: equilibrium continues downward or tests lower support
+            eq_cagr = max(-15.0, min(-2.0, (blended_initial_drift * 252.0) * 100.0)) / 100.0
+            mu_eq_daily = ((1.0 + eq_cagr) ** (1.0 / 252.0)) - 1.0 if eq_cagr > -0.99 else -0.001
+        else:
+            # Broad market is stable: fund tests support and consolidates flat
+            mu_eq_daily = max(-0.0003, blended_initial_drift * 0.3)
+    elif blended_initial_drift < 0.0002:
+        # Neutral / sideways consolidation
+        mu_eq_daily = 0.0
+    else:
+        # Positive momentum: healthy growth toward historical CAGR
+        eq_cagr = max(4.0, min(22.0, cagr_annual_pct)) / 100.0
+        mu_eq_daily = ((1.0 + eq_cagr) ** (1.0 / 252.0)) - 1.0
+
+    # 5. Generate probabilistic Monte Carlo Geometric Brownian Motion (GBM) forecast path
     b_dates = pd.bdate_range(last_date + pd.Timedelta(days=1), periods=forecast_days)
     fut_dates = [d.strftime("%d %b %Y") for d in b_dates]
 
-    phi = 0.92  # Mean-reversion half-life ~9 trading days
-    fut_vals: List[float] = []
-    upper_vals: List[float] = []
-    lower_vals: List[float] = []
-    current_val = last_val
+    rng = np.random.default_rng(42)
+    n_sim = 500
+    phi = 0.94  # Mean-reversion factor
 
-    for i in range(1, forecast_days + 1):
-        step_drift = mu_eq_daily + (phi ** i) * (blended_initial_drift - mu_eq_daily)
-        cycle = 0.15 * (sigma_daily * 100.0) * np.sin(2.0 * np.pi * i / 21.0)
-        current_val += (step_drift * 100.0) + (cycle * 0.10)
-        fut_vals.append(round(float(current_val), 2))
+    days_idx = np.arange(1, forecast_days + 1)
+    drift_vec = mu_eq_daily + (phi ** days_idx) * (blended_initial_drift - mu_eq_daily)
 
-        # 95% Confidence Corridor
-        corridor_width = 1.35 * (sigma_daily * 100.0) * np.sqrt(i)
-        upper_vals.append(round(float(current_val + corridor_width), 2))
-        lower_vals.append(round(float(current_val - corridor_width), 2))
+    # Stochastic shocks matrix: shape (forecast_days, n_sim)
+    shocks = rng.normal(0.0, sigma_daily, size=(forecast_days, n_sim))
+    daily_returns_sim = drift_vec[:, np.newaxis] + shocks
+
+    # Value progression relative to last_val (% change)
+    cum_ret = np.cumprod(1.0 + daily_returns_sim, axis=0)
+    p_last_ratio = 1.0 + (last_val / 100.0)
+    sim_pct_paths = (p_last_ratio * cum_ret - 1.0) * 100.0
+
+    # 50th percentile (Expected Median path)
+    median_path = np.median(sim_pct_paths, axis=1)
+    # 95th percentile (Bull upside breakout)
+    bull_path = np.percentile(sim_pct_paths, 95, axis=1)
+    # 5th percentile (Bear downside support)
+    bear_path = np.percentile(sim_pct_paths, 5, axis=1)
+
+    fut_vals = [round(float(v), 2) for v in median_path]
+    upper_vals = [round(float(v), 2) for v in bull_path]
+    lower_vals = [round(float(v), 2) for v in bear_path]
 
     return fut_dates, fut_vals, upper_vals, lower_vals, trend_label, trend_icon, signal, conviction_score
 
@@ -542,12 +717,8 @@ def get_fund_history(
     forecast_days: int = 30
 ) -> FundHistoryResponse:
     """Get historical percentage change chart data, AI trend forecast, and 95% confidence corridor."""
-    df = load_historical_data()
-    fund_df = df[df["Scheme_Name"] == fund_name].sort_values("Date")
-    if fund_df.empty:
-        raise ValueError(f"Fund '{fund_name}' not found.")
-
-    fallback_code = str(fund_df["Scheme_Code"].iloc[-1]).split(".")[0]
+    matched_name, fund_df, fallback_code = get_or_build_fund_df(fund_name)
+    fund_name = matched_name
     scheme_code = resolve_mfapi_code(fund_name, fallback_code)
 
     period_map = {"1M": 21, "3M": 63, "6M": 126, "1Y": 252, "2Y": 504, "3Y": 756, "5Y": 1260, "ALL": 100000}
@@ -674,7 +845,14 @@ def get_fund_history(
     else:
         current_nav_calc = hist_nav
 
-    ml_ret_pct, ml_target_nav, ml_win_prob, _, _, ml_drivers = compute_ml_prediction_details(fund_df, current_nav_calc)
+    # Real 52-Week High and Low
+    last_252 = fund_df.tail(252) if len(fund_df) >= 252 else fund_df
+    high_52w = round(float(last_252["NAV_Value"].max()), 2) if not last_252.empty else round(current_nav_calc, 2)
+    low_52w = round(float(last_252["NAV_Value"].min()), 2) if not last_252.empty else round(current_nav_calc, 2)
+    high_52w = max(high_52w, round(current_nav_calc, 2))
+    low_52w = min(low_52w, round(current_nav_calc, 2))
+
+    pred_bundle = compute_ml_prediction_bundle(fund_df, current_nav_calc)
 
     return FundHistoryResponse(
         fund_name=fund_name,
@@ -692,12 +870,20 @@ def get_fund_history(
         forecast_pct=fut_vals,
         forecast_upper_pct=upper_vals,
         forecast_lower_pct=lower_vals,
-        signal=signal,
-        conviction_score=round(conviction_score, 1),
-        pred_21d_ret_pct=ml_ret_pct,
-        pred_target_nav=ml_target_nav,
-        win_probability=ml_win_prob,
-        key_drivers=ml_drivers,
+        signal=signal if signal else pred_bundle["signal"],
+        conviction_score=round(conviction_score if conviction_score else pred_bundle["conviction_score"], 1),
+        pred_21d_ret_pct=pred_bundle["pred_21d_ret_pct"],
+        pred_target_nav=pred_bundle["pred_target_nav"],
+        pred_7d_ret_pct=pred_bundle["pred_7d_ret_pct"],
+        pred_7d_target_nav=pred_bundle["pred_7d_target_nav"],
+        pred_30d_ret_pct=pred_bundle["pred_30d_ret_pct"],
+        pred_30d_target_nav=pred_bundle["pred_30d_target_nav"],
+        bear_target_nav=pred_bundle["bear_target_nav"],
+        bull_target_nav=pred_bundle["bull_target_nav"],
+        high_52w=high_52w,
+        low_52w=low_52w,
+        win_probability=pred_bundle["win_probability"],
+        key_drivers=pred_bundle["key_drivers"],
         sortino=round(sortino, 3),
         mdd=round(mdd, 2),
         hist_return_bins=hist_bins,
@@ -720,9 +906,10 @@ def compare_funds(req: CompareRequest) -> CompareResponse:
     sentiment, month_ret, week_ret = get_market_sentiment()
 
     for idx, fund in enumerate(req.fund_names[:15]):
-        full_fdf = df[df["Scheme_Name"] == fund].sort_values("Date")
+        matched_name, full_fdf, _ = get_or_build_fund_df(fund)
         if full_fdf.empty or len(full_fdf) < 5:
             continue
+        fund = matched_name
 
         fdf = full_fdf.tail(n_days) if n_days < len(full_fdf) else full_fdf
         base_nav = float(fdf["NAV_Value"].iloc[0])
