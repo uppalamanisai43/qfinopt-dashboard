@@ -14,7 +14,7 @@ object AppConfig {
     const val DEFAULT_WIFI_URL: String = "http://10.208.105.125:8000"
     const val DEFAULT_USB_URL: String = "http://127.0.0.1:8000"
     const val DEFAULT_EMULATOR_URL: String = "http://10.0.2.2:8000"
-    const val DEFAULT_CLOUD_URL: String = "https://slideshow-marilyn-only-pit.trycloudflare.com"
+    const val DEFAULT_CLOUD_URL: String = "https://qfinopt-backend-hzin.onrender.com"
     const val DEFAULT_CLOUDFLARE_URL: String = DEFAULT_CLOUD_URL
 
     const val BASE_URL: String = DEFAULT_CLOUD_URL
